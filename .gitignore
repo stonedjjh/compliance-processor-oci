@@ -7,3 +7,6 @@ env/
 __pycache__/
 .pytest_cache/
 *.py[cod]
+
+#configuración personalizada de vscode
+.vscode/
