@@ -1,0 +1,6 @@
+#Se excluye los directorios de trabajo temporal o de ambiente venv/
+.venv/
+__pycache__/
+.pytest_cache/
+.git/
+.env
