@@ -5,27 +5,10 @@ from typing import TypedDict, Any
 
 MONGO_URL = os.getenv("MONGO_URL")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "compliance_db")
+IS_TESTING = os.getenv("ENV") == "test"
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[MONGO_DB_NAME]
-
-
-async def log_audit_event(event_type: str, document_id: str, details: dict):
-    """
-    Registra eventos en la colección audit_logs de MongoDB.
-    """
-    event = {
-        "timestamp": datetime.now(timezone.utc),
-        "event_type": event_type,
-        "document_id": document_id,
-        "details": details,
-    }
-    try:
-        await db.audit_logs.insert_one(event)
-    except Exception as e:
-        # En auditoría es vital no detener el flujo principal si falla el log,
-        # pero sí imprimir el error para monitoreo.
-        print(f"Error escribiendo en MongoDB: {e}")
 
 
 class AuditEvent(TypedDict):
@@ -38,6 +21,10 @@ async def add_register(event: AuditEvent):
     """
     Responsabilidad única: Persistir eventos de auditoría.
     """
+    if IS_TESTING:
+        print(f"[TEST-MODE] Auditoría simulada: {event['event_type']}")
+        return
+
     # Agregamos el timestamp aquí automáticamente para no repetirlo
     document_to_insert = {**event, "timestamp": datetime.now(timezone.utc)}
 
