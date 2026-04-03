@@ -128,7 +128,13 @@ async def get_documents(
     db: Session = Depends(database.get_db),
 ):
 
-    return db.query(models.Document).offset(skip).limit(limit.value).all()
+    try:
+        return db.query(models.Document).offset(skip).limit(limit.value).all()
+    except Exception as e:
+        print(f"Error al obtener documentos: {e}")
+        raise HTTPException(
+            status_code=500, detail="Error al consultar la base de datos"
+        )
 
 
 @app.get(
@@ -137,10 +143,16 @@ async def get_documents(
     status_code=status.HTTP_200_OK,
 )
 async def get_document(id: uuid.UUID, db: Session = Depends(database.get_db)):
-    db_document = db.query(models.Document).filter(models.Document.id == id).first()
-    if not db_document:
-        raise HTTPException(status_code=404, detail="Documento no encontrado")
-    return db_document
+    try:
+        db_document = db.query(models.Document).filter(models.Document.id == id).first()
+        if not db_document:
+            raise HTTPException(status_code=404, detail="Documento no encontrado")
+        return db_document
+    except HTTPException:
+        raise  # Re-lanzamos el 404 tal cual
+    except Exception as e:
+        print(f"Error al obtener documento {id}: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @app.post("/api/v1/documents/{id}/process", status_code=status.HTTP_200_OK)
@@ -159,14 +171,36 @@ async def process_document(id: uuid.UUID, db: Session = Depends(database.get_db)
             "file_id": id,
         }
 
-    db_document.status = "PROCESSED"
-    db.commit()
-    db.refresh(db_document)
+    try:
+        db_document.status = "PROCESSED"
+        db.commit()
+        db.refresh(db_document)
 
-    await mongodb.log_audit_event(
-        event_type="DOCUMENT_PROCESSED",
-        document_id=str(id),
-        details={"status": "PROCESSED", "executor": "system_v1"},
-    )
+        # 3. Auditoría de Éxito
+        await mongodb.add_register(
+            {
+                "event_type": "DOCUMENT_PROCESSED",
+                "document_id": str(id),
+                "details": {"status": "PROCESSED", "executor": "system_v1"},
+            }
+        )
 
-    return db_document
+        return db_document
+
+    except Exception as e:
+        db.rollback()  # Crucial: si falla el commit, volvemos atrás
+        print(f"Error en procesamiento de {id}: {e}")
+
+        # 4. Auditoría de Fallo
+        await mongodb.add_register(
+            {
+                "event_type": "PROCESS_FAILED",
+                "document_id": str(id),
+                "details": {"error": str(e), "current_status": db_document.status},
+            }
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al actualizar el estado del documento",
+        )
