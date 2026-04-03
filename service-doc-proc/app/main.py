@@ -3,7 +3,7 @@ from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, P
 from .database import engine
 from sqlalchemy.orm import Session
 from app.database import get_db
-from . import models
+from . import models, database
 from app.utils.validators import validate_file_upload
 
 
@@ -91,10 +91,29 @@ async def get_document(
     }
 
 
-@app.post("/api/v1/documents/{id}/process")
-def process_document(id: uuid.UUID):
+@app.post("/api/v1/documents/{id}/process", status_code=status.HTTP_200_OK)
+async def process_document(id: uuid.UUID, db: Session = Depends(database.get_db)):
+    db_document = db.query(models.Document).filter(models.Document.id == id).first()
+
+    if not db_document:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Documento no encontrado"
+        )
+
+    if db_document.status == "PROCESSED":
+        return {
+            "status": db_document.status,
+            "message": "El documento ya fue procesado previamente.",
+            "file_id": id,
+        }
+
+    db_document.status = "PROCESSED"
+    db.commit()
+    db.refresh(db_document)
+
     return {
-        "status": "UP",
+        "status": db_document.status,
         "service": "document-processor",
-        "message": f"Procesamiento iniciado para el documento {id}",
+        "message": f"Procesamiento finalizado con éxito para el documento {id}",
+        "file_id": id,
     }
