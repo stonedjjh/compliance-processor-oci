@@ -6,7 +6,6 @@ from fastapi import (
     Depends,
     HTTPException,
     status,
-    Path,
     Query,
 )
 from .internal.database import engine, get_db
@@ -14,6 +13,7 @@ from sqlalchemy.orm import Session
 from .internal import models, database
 from app.utils.validators import validate_file_upload
 from . import schemas
+from .internal import mongodb
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -51,17 +51,41 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     content = await file.read()
     validate_file_upload(content, filename, allowed_extensions=[".pdf", ".docx"])
 
-    # 1. Creamos el objeto del modelo con la info del archivo
-    new_doc = models.Document(
-        id=file_id,
-        filename=file.filename,
-        content_type=file.content_type,
-        status="Recibido",
-    )
+    try:
+        # 1. Preparar objeto
+        new_doc = models.Document(
+            id=file_id,
+            filename=file.filename,
+            content_type=file.content_type,
+            status="Recibido",
+        )
 
-    db.add(new_doc)
-    db.commit()
-    db.refresh(new_doc)
+        db.add(new_doc)
+        db.commit()
+        db.refresh(new_doc)
+
+        await mongodb.add_register(
+            {
+                "event_type": "DOCUMENT_UPLOADED",
+                "document_id": file_id,
+                "details": {"filename": filename, "status": "SUCCESS"},
+            }
+        )
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error en base de datos relacional: {e}")
+        await mongodb.add_register(
+            {
+                "event_type": "DOCUMENT_UPLOAD_FAILED",
+                "document_id": file_id,
+                "details": {"error": str(e), "filename": filename},
+            }
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error al registrar el documento en la base de datos principal",
+        )
 
     return {
         "message": "Archivo registrado en BD",
@@ -116,5 +140,11 @@ async def process_document(id: uuid.UUID, db: Session = Depends(database.get_db)
     db_document.status = "PROCESSED"
     db.commit()
     db.refresh(db_document)
+
+    await mongodb.log_audit_event(
+        event_type="DOCUMENT_PROCESSED",
+        document_id=str(id),
+        details={"status": "PROCESSED", "executor": "system_v1"},
+    )
 
     return db_document
