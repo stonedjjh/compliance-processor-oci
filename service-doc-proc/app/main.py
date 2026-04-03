@@ -1,9 +1,10 @@
 import uuid
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException
-from .database import engine, SessionLocal
+from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status
+from .database import engine
 from sqlalchemy.orm import Session
 from app.database import get_db
 from . import models
+from app.utils.validators import validate_file_upload
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -28,7 +29,18 @@ def health_check():
 
 @app.post("/api/v1/documents/upload")
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+
+    filename = file.filename
+    if not filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nombre de archivo no válido",
+        )
+
     file_id = str(uuid.uuid4())
+
+    content = await file.read()
+    validate_file_upload(content, filename, allowed_extensions=[".pdf", ".docx"])
 
     # 1. Creamos el objeto del modelo con la info del archivo
     new_doc = models.Document(
