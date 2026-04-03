@@ -69,10 +69,32 @@ def test_get_documents():
     assert "Listado" in response.json()["message"]
 
 
-def test_process_document():
-    doc_id = "proc-456"
-    response = client.post(f"/api/v1/documents/{doc_id}/process")
-    assert response.status_code == 200
-    # para evitar problemas de capitalizado o mayusculas, convertimos a minúsculas
-    assert "iniciado" in response.json()["message"].lower()
-    assert doc_id in response.json()["message"]
+def test_process_document_success():
+    file_content = b"%PDF-1.4 contenido"
+    response_up = client.post(
+        "/api/v1/documents/upload",
+        files={"file": ("test.pdf", file_content, "application/pdf")},
+    )
+    doc_id = response_up.json()["file_id"]
+
+    response_proc = client.post(f"/api/v1/documents/{doc_id}/process")
+
+    assert response_proc.status_code == 200
+    assert response_proc.json()["status"] == "PROCESSED"
+    assert response_proc.json()["file_id"] == doc_id
+
+
+def test_process_document_already_processed():
+    file_content = b"%PDF-1.4 contenido"
+    response_up = client.post(
+        "/api/v1/documents/upload",
+        files={"file": ("test2.pdf", file_content, "application/pdf")},
+    )
+    doc_id = response_up.json()["file_id"]
+
+    client.post(f"/api/v1/documents/{doc_id}/process")
+
+    response_re = client.post(f"/api/v1/documents/{doc_id}/process")
+
+    assert response_re.status_code == 200
+    assert "ya fue procesado" in response_re.json()["message"]
