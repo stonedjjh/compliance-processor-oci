@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.main import app
-from app.database import Base, get_db
+from app.internal.database import Base, get_db
 
 DATABASE_URL = str(
     os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/compliance_db")

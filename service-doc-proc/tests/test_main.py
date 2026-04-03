@@ -34,7 +34,7 @@ def test_upload_file():
 
     assert response.status_code == 201
     data = response.json()
-    assert "file_id" in data
+    assert "id" in data
     assert data["filename"] == file_name
     assert data["status"] == "Recibido"
 
@@ -50,7 +50,7 @@ def test_upload_and_get_document_strict():
     )
 
     assert response_upload.status_code == 201
-    document_id = response_upload.json()["file_id"]
+    document_id = response_upload.json()["id"]
 
     # 2. Consultamos el detalle
     get_response = client.get(f"/api/v1/documents/{document_id}")
@@ -60,7 +60,7 @@ def test_upload_and_get_document_strict():
 
     assert detail_data["filename"] == file_name
     assert detail_data["status"] == "Recibido"  # El estado inicial en BD
-    assert "file_id" in detail_data
+    assert "id" in detail_data
 
 
 def test_get_documents_pagination():
@@ -90,10 +90,14 @@ def test_get_documents_empty_pagination():
 def test_get_documents_invalid_limit():
     # Probamos enviar un límite no permitido (ej. 7)
     response = client.get("/api/v1/documents?skip=0&limit=7")
-    assert response.status_code == 400
-    assert (
-        "El límite debe ser uno de los siguientes valores" in response.json()["detail"]
-    )
+
+    assert response.status_code == 422
+
+    # Convertimos a string el detalle porque FastAPI devuelve una lista de errores
+    error_detail = str(response.json()["detail"])
+
+    # Buscamos el mensaje estándar de Pydantic para Enums
+    assert "5, 10 or 50" in error_detail
 
 
 def test_process_document_success():
@@ -102,13 +106,13 @@ def test_process_document_success():
         "/api/v1/documents/upload",
         files={"file": ("test.pdf", file_content, "application/pdf")},
     )
-    doc_id = response_up.json()["file_id"]
+    doc_id = response_up.json()["id"]
 
     response_proc = client.post(f"/api/v1/documents/{doc_id}/process")
 
     assert response_proc.status_code == 200
     assert response_proc.json()["status"] == "PROCESSED"
-    assert response_proc.json()["file_id"] == doc_id
+    assert response_proc.json()["id"] == doc_id
 
 
 def test_process_document_already_processed():
@@ -117,7 +121,7 @@ def test_process_document_already_processed():
         "/api/v1/documents/upload",
         files={"file": ("test2.pdf", file_content, "application/pdf")},
     )
-    doc_id = response_up.json()["file_id"]
+    doc_id = response_up.json()["id"]
 
     client.post(f"/api/v1/documents/{doc_id}/process")
 

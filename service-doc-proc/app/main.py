@@ -9,12 +9,11 @@ from fastapi import (
     Path,
     Query,
 )
-from .database import engine
+from .internal.database import engine, get_db
 from sqlalchemy.orm import Session
-from app.database import get_db
-from . import models, database
+from .internal import models, database
 from app.utils.validators import validate_file_upload
-from typing import List
+from . import schemas
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -66,7 +65,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
 
     return {
         "message": "Archivo registrado en BD",
-        "file_id": file_id,
+        "id": file_id,
         "status": "Recibido",
         "filename": file.filename,
     }
@@ -74,43 +73,28 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
 
 @app.get(
     "/api/v1/documents",
+    response_model=list[schemas.DocumentOut],
     status_code=status.HTTP_200_OK,
 )
 async def get_documents(
     skip: int = Query(0, ge=0),
-    limit: int = Query(10, description="Opciones permitidas: 5, 10, 50"),
+    limit: schemas.PageLimit = schemas.PageLimit.MEDIUM,
     db: Session = Depends(database.get_db),
 ):
-    # Validamos que el límite esté en nuestro conjunto permitido
-    allowed_limits = {5, 10, 50}
-    if limit not in allowed_limits:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"El límite debe ser uno de los siguientes valores: {allowed_limits}",
-        )
 
-    documents = db.query(models.Document).offset(skip).limit(limit).all()
-    return documents
+    return db.query(models.Document).offset(skip).limit(limit.value).all()
 
 
-@app.get("/api/v1/documents/{id}", status_code=status.HTTP_200_OK)
-async def get_document(
-    id: uuid.UUID = Path(..., description="El UUID del documento a consultar"),
-    db: Session = Depends(get_db),
-):
-
-    # Buscamos el registro real en la base de datos
+@app.get(
+    "/api/v1/documents/{id}",
+    response_model=schemas.DocumentOut,
+    status_code=status.HTTP_200_OK,
+)
+async def get_document(id: uuid.UUID, db: Session = Depends(database.get_db)):
     db_document = db.query(models.Document).filter(models.Document.id == id).first()
-
     if not db_document:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
-
-    return {
-        "file_id": db_document.id,
-        "filename": db_document.filename,
-        "status": db_document.status,
-        "message": f"Detalle del documento {id} obtenido",
-    }
+    return db_document
 
 
 @app.post("/api/v1/documents/{id}/process", status_code=status.HTTP_200_OK)
@@ -133,9 +117,4 @@ async def process_document(id: uuid.UUID, db: Session = Depends(database.get_db)
     db.commit()
     db.refresh(db_document)
 
-    return {
-        "status": db_document.status,
-        "service": "document-processor",
-        "message": f"Procesamiento finalizado con éxito para el documento {id}",
-        "file_id": id,
-    }
+    return db_document
