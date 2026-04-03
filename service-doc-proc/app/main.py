@@ -1,10 +1,20 @@
 import uuid
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, Path
+from fastapi import (
+    FastAPI,
+    File,
+    UploadFile,
+    Depends,
+    HTTPException,
+    status,
+    Path,
+    Query,
+)
 from .database import engine
 from sqlalchemy.orm import Session
 from app.database import get_db
 from . import models, database
 from app.utils.validators import validate_file_upload
+from typing import List
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -62,13 +72,22 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     }
 
 
-@app.get("/api/v1/documents")
-def get_documents():
-    return {
-        "status": "UP",
-        "service": "document-processor",
-        "message": "Listado de documentos obtenido",
-    }
+@app.get("/api/v1/documents", response_model=List[models.Document.DocumentSchema])
+async def get_documents(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, description="Opciones permitidas: 5, 10, 50"),
+    db: Session = Depends(database.get_db),
+):
+    # Validamos que el límite esté en nuestro conjunto permitido
+    allowed_limits = {5, 10, 50}
+    if limit not in allowed_limits:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"El límite debe ser uno de los siguientes valores: {allowed_limits}",
+        )
+
+    documents = db.query(models.Document).offset(skip).limit(limit).all()
+    return documents
 
 
 @app.get("/api/v1/documents/{id}", status_code=status.HTTP_200_OK)
