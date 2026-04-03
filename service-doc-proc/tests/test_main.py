@@ -89,6 +89,15 @@ def test_get_documents_empty_pagination():
     assert response.json() == []
 
 
+def test_get_documents_invalid_limit():
+    # Probamos enviar un límite no permitido (ej. 7)
+    response = client.get("/api/v1/documents?skip=0&limit=7")
+    assert response.status_code == 400
+    assert (
+        "El límite debe ser uno de los siguientes valores" in response.json()["detail"]
+    )
+
+
 def test_process_document_success():
     file_content = b"%PDF-1.4 contenido"
     response_up = client.post(
