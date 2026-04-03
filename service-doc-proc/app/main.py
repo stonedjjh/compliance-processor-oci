@@ -1,6 +1,21 @@
-from fastapi import FastAPI
+import uuid
+from fastapi import FastAPI, File, UploadFile, Depends
+from .database import engine, SessionLocal
+from sqlalchemy.orm import Session
+from . import models
+
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Document Processing Service")
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @app.get("/")
@@ -18,9 +33,27 @@ def health_check():
     }
 
 
-@app.post("/api/v1/document/upload")
-async def upload_file():
-    return {"status": "Recibido"}
+@app.post("/api/v1/documents/upload")
+async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    file_id = str(uuid.uuid4())
+
+    # 1. Creamos el objeto del modelo con la info del archivo
+    new_doc = models.Document(
+        id=file_id,
+        filename=file.filename,
+        content_type=file.content_type,
+        status="Recibido",
+    )
+
+    db.add(new_doc)
+    db.commit()
+    db.refresh(new_doc)
+
+    return {
+        "message": "Archivo registrado en BD",
+        "file_id": file_id,
+        "filename": file.filename,
+    }
 
 
 @app.get("/api/v1/documents")
