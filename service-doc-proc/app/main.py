@@ -72,7 +72,10 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     }
 
 
-@app.get("/api/v1/documents", response_model=List[models.Document.DocumentSchema])
+@app.get(
+    "/api/v1/documents",
+    status_code=status.HTTP_200_OK,
+)
 async def get_documents(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, description="Opciones permitidas: 5, 10, 50"),

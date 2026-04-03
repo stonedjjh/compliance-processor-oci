@@ -64,22 +64,20 @@ def test_upload_and_get_document_strict():
 
 
 def test_get_documents_pagination():
-    # 1. Aseguramos que haya al menos 3 documentos en la DB de test
     file_content = b"%PDF-1.4 contenido"
-    for i in range(3):
+    for i in range(7):
         client.post(
             "/api/v1/documents/upload",
             files={"file": (f"test_{i}.pdf", file_content, "application/pdf")},
         )
 
-    # 2. Probamos la paginación: pedir solo 2
-    response = client.get("/api/v1/documents?skip=0&limit=2")
+    response = client.get("/api/v1/documents?skip=0&limit=5")
 
     assert response.status_code == 200
     data = response.json()
     # Esperamos una lista de documentos, no un objeto de estatus
     assert isinstance(data, list)
-    assert len(data) == 2
+    assert len(data) == 5
 
 
 def test_get_documents_empty_pagination():
