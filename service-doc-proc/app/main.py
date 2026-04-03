@@ -8,12 +8,14 @@ from fastapi import (
     status,
     Query,
 )
-from .internal.database import engine, get_db
+from fastapi.responses import JSONResponse
+from .internal.database import engine, get_db, check_postgres_connection
 from sqlalchemy.orm import Session
 from .internal import models, database
 from app.utils.validators import validate_file_upload
 from . import schemas
 from .internal import mongodb
+from datetime import datetime, timezone
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -28,12 +30,32 @@ def read_root():
 
 # Endpoint para verificar el estado del servicio
 @app.get("/api/v1/health")
-def health_check():
-    return {
-        "status": "UP",
-        "service": "document-processor",
-        "message": "Activo y en servicio, Jefe. ¡Vamos con todo!",
-    }
+async def health_check(db: Session = Depends(get_db)):
+    # Verificamos ambos corazones
+    postgres_ok = check_postgres_connection(db)
+    mongo_ok = await mongodb.check_connection()
+
+    # Determinamos el estado general
+    is_healthy = postgres_ok and mongo_ok
+    status_code = (
+        status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
+
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "UP" if is_healthy else "DOWN",
+            "service": "document-processor",
+            "message": "Activo y en servicio, Jefe. ¡Vamos con todo!"
+            if is_healthy
+            else "Tenemos problemas técnicos, Jefe.",
+            "components": {
+                "postgres": "OK" if postgres_ok else "ERROR",
+                "mongodb": "OK" if mongo_ok else "ERROR",
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
+    )
 
 
 @app.post("/api/v1/documents/upload", status_code=status.HTTP_201_CREATED)

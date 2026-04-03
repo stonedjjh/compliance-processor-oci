@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import declarative_base
 
@@ -21,3 +21,13 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def check_postgres_connection(db):
+    """Verifica si PostgreSQL responde."""
+    try:
+        db.execute(text("SELECT 1"))
+        return True
+    except Exception as e:
+        print(f"Health Check Fallido en Postgres: {e}")
+        return False

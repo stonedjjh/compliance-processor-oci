@@ -46,3 +46,13 @@ async def add_register(event: AuditEvent):
     except Exception as e:
         # Si falla Mongo, el 'print' es nuestro último recurso de log
         print(f"CRITICAL: MongoDB Audit Failure: {e} | Event: {event}")
+
+
+async def check_connection():
+    """Verifica si MongoDB responde."""
+    try:
+        await client.admin.command("ping")
+        return True
+    except Exception as e:
+        print(f"Health Check Fallido en MongoDB: {e}")
+        return False
