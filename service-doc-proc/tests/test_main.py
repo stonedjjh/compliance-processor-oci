@@ -28,28 +28,45 @@ def test_upload_file():
     file_name = "documento_importante.pdf"
 
     response = client.post(
-        "/api/v1/document/upload",
+        "/api/v1/documents/upload",
         files={"file": (file_name, file_content, "application/pdf")},
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert "id" in data
+    assert "file_id" in data
     assert data["filename"] == file_name
     assert data["status"] == "Recibido"
+
+
+def test_upload_and_get_document_strict():
+    # 1. Subimos un archivo con un nombre único
+    file_content = b"%PDF-1.4 contenido real"
+    file_name = "mi_documento_corporativo.pdf"
+
+    response_upload = client.post(
+        "/api/v1/documents/upload",
+        files={"file": (file_name, file_content, "application/pdf")},
+    )
+
+    assert response_upload.status_code == 200
+    document_id = response_upload.json()["file_id"]
+
+    # 2. Consultamos el detalle
+    get_response = client.get(f"/api/v1/documents/{document_id}")
+    assert get_response.status_code == 200
+
+    detail_data = get_response.json()
+
+    assert detail_data["filename"] == file_name
+    assert detail_data["status"] == "Recibido"  # El estado inicial en BD
+    assert "file_id" in detail_data
 
 
 def test_get_documents():
     response = client.get("/api/v1/documents")
     assert response.status_code == 200
     assert "Listado" in response.json()["message"]
-
-
-def test_get_single_document():
-    doc_id = "test-123"
-    response = client.get(f"/api/v1/documents/{doc_id}")
-    assert response.status_code == 200
-    assert doc_id in response.json()["message"]
 
 
 def test_process_document():
