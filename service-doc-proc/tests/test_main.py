@@ -32,7 +32,7 @@ def test_upload_file():
         files={"file": (file_name, file_content, "application/pdf")},
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
     data = response.json()
     assert "file_id" in data
     assert data["filename"] == file_name
@@ -49,7 +49,7 @@ def test_upload_and_get_document_strict():
         files={"file": (file_name, file_content, "application/pdf")},
     )
 
-    assert response_upload.status_code == 200
+    assert response_upload.status_code == 201
     document_id = response_upload.json()["file_id"]
 
     # 2. Consultamos el detalle

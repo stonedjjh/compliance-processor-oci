@@ -1,5 +1,5 @@
 import uuid
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status
+from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status, Path
 from .database import engine
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -27,7 +27,7 @@ def health_check():
     }
 
 
-@app.post("/api/v1/documents/upload")
+@app.post("/api/v1/documents/upload", status_code=status.HTTP_201_CREATED)
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
     filename = file.filename
@@ -71,8 +71,12 @@ def get_documents():
     }
 
 
-@app.get("/api/v1/documents/{id}")
-def get_document(id: str, db: Session = Depends(get_db)):
+@app.get("/api/v1/documents/{id}", status_code=status.HTTP_200_OK)
+async def get_document(
+    id: uuid.UUID = Path(..., description="El UUID del documento a consultar"),
+    db: Session = Depends(get_db),
+):
+
     # Buscamos el registro real en la base de datos
     db_document = db.query(models.Document).filter(models.Document.id == id).first()
 
@@ -88,7 +92,7 @@ def get_document(id: str, db: Session = Depends(get_db)):
 
 
 @app.post("/api/v1/documents/{id}/process")
-def process_document(id: str):
+def process_document(id: uuid.UUID):
     return {
         "status": "UP",
         "service": "document-processor",
