@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from main import app
+from app.main import app
 
 client = TestClient(app)
 
@@ -20,11 +20,23 @@ def test_health_check():
     assert "Jefe" in response.json()["message"]
 
 
+# Prueba de carga de archivo con un PDF simulado
+# Aqui aplique TDD para asegurar que el endpoint de carga de archivos funcione correctamente
 def test_upload_file():
-    # Nueva ruta de carga
-    response = client.post("/api/v1/document/upload")
+    # Simulamos un PDF real
+    file_content = b"%PDF-1.4 prueba de contenido"
+    file_name = "documento_importante.pdf"
+
+    response = client.post(
+        "/api/v1/document/upload",
+        files={"file": (file_name, file_content, "application/pdf")},
+    )
+
     assert response.status_code == 200
-    assert response.json() == {"status": "Recibido"}
+    data = response.json()
+    assert "id" in data
+    assert data["filename"] == file_name
+    assert data["status"] == "Recibido"
 
 
 def test_get_documents():
