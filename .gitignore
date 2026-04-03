@@ -10,3 +10,6 @@ __pycache__/
 
 #configuración personalizada de vscode
 .vscode/
+
+# Secretos
+.env
