@@ -13,3 +13,6 @@ __pycache__/
 
 # Secretos
 .env
+
+node_modules/
+dist/
