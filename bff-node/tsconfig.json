@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",               /* Usamos estándares modernos de Node 20+ */
+    "module": "NodeNext",             /* Para usar 'import' y 'export' nativos */
+    "lib": ["es2022"],                /* Soporte para APIs modernas de JS */
+    "outDir": "./dist",               /* Donde irá el código compilado para producción */
+    "rootDir": "./src",               /* Donde escribimos nuestro código */
+    "strict": true,                   /* ACTIVA TODO: No permite 'any' implícitos, nulls no controlados, etc. */
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,          /* Para que los 'import' de librerías viejas no den guerra */
+    "skipLibCheck": true,             /* Acelera la compilación saltando tipos de terceros */
+    "forceConsistentCasingInFileNames": true, /* Evita errores de mayúsculas/minúsculas en Linux/Windows */
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["src/**/*"],            /* Solo compila lo que esté en src */
+  "exclude": ["node_modules", "dist"] /* Ignora el ruido */
+}
