@@ -21,57 +21,21 @@ El sistema se compone de varios servicios independientes. Actualmente, el desarr
 Este servicio es el punto de entrada para la gestión de archivos. Utiliza FastAPI para garantizar un alto rendimiento y tipado de datos estricto.
 
 ### Características Principales
+
 - **Validación Modular (SRP):** Lógica de validación desacoplada del punto de entrada en `app/utils/validators.py`.
+
 - **Seguridad de Infraestructura:** Aunque no formaba parte de los requerimientos iniciales, se implementó una restricción de **tamaño máximo de 10MB** por archivo para prevenir ataques de denegación de servicio (DoS) y optimizar el almacenamiento.
+
 - **Observabilidad (Health Checks):** Endpoint dinámico /api/v1/health que monitorea en tiempo real monitorea en tiempo real el 'Triángulo de Persistencia' (PostgreSQL, MongoDB y MinIO),  devolviendo estados 503 ante fallos de infraestructura.
+
 - **Control de Extensiones:** Sistema flexible basado en listas blancas que permite restringir tipos de archivos (configurado actualmente para permitir todos mediante `*`).
+
 - **Base de Datos Aislada para Pruebas:** Configuración de `pytest` con esquemas dinámicos de PostgreSQL para garantizar que los tests no afecten los datos de desarrollo.
 
 > [!IMPORTANT]
 > Observación de Integridad: Se identificó la necesidad de un sistema de detección de duplicados de documentos (vía hash SHA-256) para optimizar el almacenamiento. Se ha priorizado la arquitectura de servicios core, dejando esta funcionalidad como una mejora incremental planificada.
 
-### Estructura del Proyecto
 
-```text
-compliance-processor-oci/
-├── service-doc-proc/
-│   ├── app/
-│   │   ├── internal/
-│   │   │   └── config.py     # Gestión de variables de entorno y configuración centralizada 
-│   │   │   └── database.py   # SQLAlchemy, Sesiones y Health Check SQL
-│   │   │   └── models.py     # Modelos relacionales (PostgreSQL)
-│   │   │   └── mongodb.py    # Cliente NoSQL asíncrono (Motor) y auditoría
-│   │   └── utils/
-│   │       └── storage.py     # Lógica de interacción con MinIO/S3 (StorageManager)
-│   │       └── validators.py  # Validación de archivos (SRP)
-│   │   ├── main.py            # Endpoints, lógica de negocio y Health Checks
-│   │   ├── schemas.py         # Definición de modelos para validación de entrada/salida (DTOs)
-│   ├── tests/
-│   │   ├── conftest.py        # Fixtures y mocks de entorno
-│   │   └── test_main.py       # Pruebas unitarias e integración
-│   └── .dockerignore          # Exclusión de archivos para construcción de la imagen de Python
-│   └── Dockerfile             # Definición de la imagen base y pasos de despliegue 
-│   └── requirements.txt       # Lista de dependencias del proyecto Python
-├── bff-node/
-│   ├── src/
-│   │   ├── adapters/
-│   │       └── document.adapter.ts      # Cliente Axios para comunicación con el Core Service
-│   │   ├── controller/
-│   │       └── document.controllers.ts  # Orquestación de peticiones y manejo de respuestas 
-│   │   ├── middlewares/
-│   │   ├── routes/
-│   │       └── document.routes.ts # Definición de rutas y vinculación con controladores
-│   │   ├── types/
-│   │       └── pagination.types.ts # Interfaces y tipos compartidos
-│   │   ├── index.ts  # Punto de entrada de la aplicación y configuración del servidor Express
-│   ├── .env/         # Variables de entorno específicas para el entorno de ejecución Node.js
-│   ├── Dockerfile     # Definición de la imagen base y pasos de despliegue para el BFF
-│   ├── package.json  # Manifiesto de dependencias y scripts de ejecución de Node.js
-│   ├── tsconfig.json # Reglas de compilación y configuración de tipos de TypeScript
-├── .env              # Variables de entorno globales para la orquestación del proyecto
-├── .gitignore        # Exclusión de archivos para el control de versiones de Git
-├── docker-compose.yml  # Orquestación de contenedores (BFF, Core, DBs y Storage)
-```    
 
 ### Documentación del API Core
 
@@ -104,6 +68,8 @@ Usa el siguiente comando desde la raíz del proyecto `service-doc-proc`:
 docker exec -it doc_processor_app pytest tests/test_main.py
 ```
 
+El sistema cuenta con una suite de pruebas automatizadas con Pytest que validan el flujo de seguridad. Las pruebas confirman que el acceso a los recursos está protegido y que solo las peticiones con una API Key válida pueden interactuar con el procesador de documentos.
+
 <p align="center">
   <img src="./image/document_processor_text_result.png" width="800" alt="Resultado de Tests Pytest">
 </p>
@@ -115,7 +81,7 @@ docker exec -it doc_processor_app pytest tests/test_main.py
 - **Organización DDD**: Se ha considerado una estructura basada en DDD (Domain-Driven Design), pero dado el tamaño y alcance actual de este servicio único, se ha optado por una estructura modular más ligera para evitar sobreingeniería, priorizando la claridad y la rapidez de desarrollo.
 
 
-## Demostración de Trazabilidad End-to-End
+### Demostración de Trazabilidad End-to-End
 
 Para garantizar la integridad de los datos, el sistema sincroniza cada carga en tres capas distintas utilizando un identificador único (UUID).
 
@@ -208,8 +174,90 @@ Endpoint: GET /api/v1/documents
 <img src="./image/bff-list-of-documents.png" width="800" alt="Show documents list">
 </p>
 
+### Seguridad y Configuración (12-Factor App)
+
+El proyecto sigue los principios de Twelve-Factor App, específicamente en la gestión de configuraciones y seguridad:
+
+- **Configuración por Entorno:** Toda la sensibilidad (API Keys, credenciales de MinIO, URIs de bases de datos) se gestiona mediante variables de entorno (`.env`), permitiendo que el código sea agnóstico al entorno de ejecución.
+
+- **Seguridad S2S (Service-to-Service):** Se implementó un "Handshake" de seguridad entre el BFF y el Core. Todas las peticiones internas requieren el header `X-API-KEY`. Esto asegura que el procesador de documentos solo acepte peticiones legítimas del BFF.
+
+### Flujo de Notificaciones en Tiempo Real
+
+Para ofrecer una experiencia de usuario fluida, el sistema utiliza un modelo de comunicación reactivo:
+
+- **Acción:** El usuario inicia el procesamiento de un documento.
+
+- **Backend**: El Core procesa el archivo y, al finalizar, dispara un Webhook hacia el BFF.
+
+- **Frontend**: El BFF emite un evento vía Socket.io.
+
+- **Resultado**: El cliente recibe la actualización instantáneamente sin necesidad de refrescar la página.
+
+#### Evidencia de funcionamiento:
+
+Paso 1: Solicitud de procesamiento exitosa desde el cliente API.
+
+<p align="center">
+<img src="./image/bff-upload-file-with-notification.png" width="800" alt="upload document">
+</p>
+
+Paso 2: Recepción automática del evento en el cliente de prueba (Browser).
+
+<p align="center">
+<img src="./image/socket-io-notification.png" width="800" alt="front-end view">
+</p>
+
+Nota: El archivo test-socket.html se incluye exclusivamente como Prueba de Concepto (PoC) para validar la conectividad de WebSockets antes de la integración total con el Frontend.
+
 ### Notas Técnicas de la Implementación
 
 - **Orquestación:** El BFF actúa como un intermediario que valida la integridad de los datos antes de delegar la lógica de negocio al Core en Python.
+
 - **Manejo de Binarios:** Se utiliza `Multer` para la gestión de archivos en memoria, optimizando la velocidad de transferencia hacia el almacenamiento persistente.
+
 - **Tolerancia a Fallos:** El endpoint de `health` realiza un chequeo en cascada, validando tanto la disponibilidad del BFF como la conectividad de los servicios internos del Core.
+
+## Estructura del Proyecto
+
+```text
+compliance-processor-oci/
+├── service-doc-proc/
+│   ├── app/
+│   │   ├── internal/
+│   │   │   └── config.py     # Gestión de variables de entorno y configuración centralizada 
+│   │   │   └── database.py   # SQLAlchemy, Sesiones y Health Check SQL
+│   │   │   └── models.py     # Modelos relacionales (PostgreSQL)
+│   │   │   └── mongodb.py    # Cliente NoSQL asíncrono (Motor) y auditoría
+│   │   └── utils/
+│   │       └── notifier.py    # Lógica de notificación de eventos en tiempo real.
+│   │       └── storage.py     # Lógica de interacción con MinIO/S3 (StorageManager)
+│   │       └── validators.py  # Validación de archivos (SRP)
+│   │   ├── main.py            # Endpoints, lógica de negocio y Health Checks
+│   │   ├── schemas.py         # Definición de modelos para validación de entrada/salida (DTOs)
+│   ├── tests/
+│   │   ├── conftest.py        # Fixtures y mocks de entorno
+│   │   └── test_main.py       # Pruebas unitarias e integración
+│   └── .dockerignore          # Exclusión de archivos para construcción de la imagen de Python
+│   └── Dockerfile             # Definición de la imagen base y pasos de despliegue 
+│   └── requirements.txt       # Lista de dependencias del proyecto Python
+├── bff-node/
+│   ├── src/
+│   │   ├── adapters/
+│   │       └── document.adapter.ts      # Cliente Axios para comunicación con el Core Service
+│   │   ├── controller/
+│   │       └── document.controllers.ts  # Orquestación de peticiones y manejo de respuestas 
+│   │   ├── middlewares/
+│   │   ├── routes/
+│   │       └── document.routes.ts # Definición de rutas y vinculación con controladores
+│   │   ├── types/
+│   │       └── pagination.types.ts # Interfaces y tipos compartidos
+│   │   ├── index.ts  # Punto de entrada de la aplicación y configuración del servidor Express
+│   ├── .env/         # Variables de entorno específicas para el entorno de ejecución Node.js
+│   ├── Dockerfile     # Definición de la imagen base y pasos de despliegue para el BFF
+│   ├── package.json  # Manifiesto de dependencias y scripts de ejecución de Node.js
+│   ├── tsconfig.json # Reglas de compilación y configuración de tipos de TypeScript
+├── .env              # Variables de entorno globales para la orquestación del proyecto
+├── .gitignore        # Exclusión de archivos para el control de versiones de Git
+├── docker-compose.yml  # Orquestación de contenedores (BFF, Core, DBs y Storage)
+```    
