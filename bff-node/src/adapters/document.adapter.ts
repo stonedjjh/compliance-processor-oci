@@ -1,4 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
+import FormData from 'form-data';
+import { PaginationLimit, PaginationParams } from '../types/pagination.types';
 
 export class DocumentAdapter {
   private client: AxiosInstance;
@@ -6,14 +8,14 @@ export class DocumentAdapter {
   constructor() {
     this.client = axios.create({
       baseURL: process.env.DOCUMENT_PROCESSOR_URL,
-      timeout: 5000,
+      timeout: 30000,
       headers: {
         'Content-Type': 'application/json'
       }
     });
   }
 
-  async checkCoreHealth(): Promise<boolean> {
+  checkCoreHealth = async (): Promise<boolean> => {  
     try {
       const response = await this.client.get('/api/v1/health');
       return response.status === 200;
@@ -23,5 +25,64 @@ export class DocumentAdapter {
     }
   }
   
-  // Aquí iremos agregando los métodos para subir archivos, etc.
+  uploadDocument = async (fileBuffer: Buffer, fileName: string, mimeType: string) => {
+    try {
+      const form = new FormData();
+      form.append('file', fileBuffer, {
+        filename: fileName,
+        contentType: mimeType,
+      });
+
+      // El endpoint en Python también debería llevar el prefijo si lo configuraste así
+      const response = await this.client.post('/api/v1/documents/upload', form, {
+        headers: {
+          ...form.getHeaders(),
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Error al subir documento:', error.response?.data || error.message);
+      throw new Error('Fallo en la comunicación con el procesador');
+    }
+  };
+
+  getDocuments = async (page: number = 1, limit: PaginationLimit = 10) => {
+   try {    
+    const skip = (page - 1) * limit;
+    const params: PaginationParams = {
+      skip: skip,  
+      limit: limit
+    };    
+
+    const response = await this.client.get('/api/v1/documents', {
+      params
+    });
+    return response.data;
+    } catch (error: any) {
+      console.error('Error al obtener documentos:', error.response?.data || error.message);
+      throw new Error('No se pudo obtener la lista de documentos');
+    }
+  };
+
+  getDocumentById = async (id: string) => {
+    try {
+      const response = await this.client.get(`/api/v1/documents/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error(`Error al obtener documento ${id}:`, error.response?.data || error.message);
+      throw new Error('Documento no encontrado o error en el core');
+    }
+  };
+
+  processDocument = async (id: string) => {
+    try {      
+      const response = await this.client.post(`/api/v1/documents/${id}/process`);
+      return response.data;
+    } catch (error: any) {
+      console.error(`Error disparando proceso para ${id}:`, error.response?.data || error.message);
+      throw new Error('No se pudo iniciar el procesamiento del documento');
+    }
+  };
+
 }
