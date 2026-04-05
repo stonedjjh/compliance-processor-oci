@@ -1,7 +1,16 @@
 from fastapi.testclient import TestClient
 from app.main import app
+import os
+import pytest
 
 client = TestClient(app)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def set_test_env():
+    # Esto sobreescribe la variable en memoria SOLO para el proceso de pytest
+    os.environ["ENV"] = "test"
+    yield
 
 
 def test_read_root():

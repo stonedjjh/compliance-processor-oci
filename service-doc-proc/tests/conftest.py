@@ -59,3 +59,19 @@ def override_get_db(session):
 @pytest.fixture
 def client():
     return TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def mock_storage(monkeypatch):
+    """Evita que los tests toquen el storage real."""
+
+    def mock_put(*args, **kwargs):
+        return {"ResponseMetadata": {"HTTPStatusCode": 200}}
+
+    def mock_head(*args, **kwargs):
+        return {}
+
+    monkeypatch.setattr(
+        "app.utils.storage.StorageManager._ensure_bucket_exists", lambda x: None
+    )
+    monkeypatch.setattr("botocore.client.BaseClient._make_api_call", mock_put)
