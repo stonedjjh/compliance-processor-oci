@@ -13,6 +13,9 @@ class Document(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     filename: Mapped[str] = mapped_column(String, nullable=False)
-    content_type = Column(String)
+    content_type: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="Recibido")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    storage_path: Mapped[str] = mapped_column(String, nullable=True)
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

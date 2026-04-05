@@ -13,6 +13,7 @@ class DocumentOut(BaseModel):
     id: UUID
     filename: str
     status: str
+    storage_path: str | None = None
     content_type: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

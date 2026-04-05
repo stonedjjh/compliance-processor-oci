@@ -17,6 +17,8 @@ from . import schemas
 from .internal import mongodb
 from datetime import datetime, timezone
 
+from app.utils.storage import StorageManager, storage_manager
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -34,9 +36,10 @@ async def health_check(db: Session = Depends(get_db)):
     # Verificamos ambos corazones
     postgres_ok = check_postgres_connection(db)
     mongo_ok = await mongodb.check_connection()
+    storage_ok = storage_manager.check_health()
 
     # Determinamos el estado general
-    is_healthy = postgres_ok and mongo_ok
+    is_healthy = postgres_ok and mongo_ok and storage_ok
     status_code = (
         status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
     )
@@ -52,6 +55,7 @@ async def health_check(db: Session = Depends(get_db)):
             "components": {
                 "postgres": "OK" if postgres_ok else "ERROR",
                 "mongodb": "OK" if mongo_ok else "ERROR",
+                "storage": "OK" if storage_ok else "ERROR",
             },
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
@@ -74,12 +78,18 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     validate_file_upload(content, filename, allowed_extensions=[".pdf", ".docx"])
 
     try:
-        # 1. Preparar objeto
+        storage = StorageManager()
+        unique_filename = f"{uuid.uuid4()}-{file.filename}"
+        storage_path = storage.upload_file(
+            content, unique_filename, file.content_type or "application/octet-stream"
+        )
+
         new_doc = models.Document(
             id=file_id,
             filename=file.filename,
             content_type=file.content_type,
             status="Recibido",
+            storage_path=storage_path,
         )
 
         db.add(new_doc)
@@ -95,25 +105,31 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         )
 
     except Exception as e:
-        db.rollback()
+        if "db" in locals():
+            db.rollback()
+        print(f"DEBUG - Error en Upload: {str(e)}")
         print(f"Error en base de datos relacional: {e}")
-        await mongodb.add_register(
-            {
-                "event_type": "DOCUMENT_UPLOAD_FAILED",
-                "document_id": file_id,
-                "details": {"error": str(e), "filename": filename},
-            }
-        )
+        try:
+            await mongodb.add_register(
+                {
+                    "event_type": "DOCUMENT_UPLOAD_FAILED",
+                    "document_id": file_id,
+                    "details": {"error": str(e), "filename": filename},
+                }
+            )
+        except Exception as e:
+            pass
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error al registrar el documento en la base de datos principal",
         )
 
     return {
-        "message": "Archivo registrado en BD",
+        "message": "Archivo subido y registrado exitosamente",
         "id": file_id,
         "status": "Recibido",
         "filename": file.filename,
+        "storage_path": storage_path,
     }
 
 
