@@ -37,17 +37,50 @@ compliance-processor-oci/
 ├── service-doc-proc/
 │   ├── app/
 │   │   ├── internal/
+│   │   │   └── config.py     # Gestión de variables de entorno y configuración centralizada 
+│   │   │   └── database.py   # SQLAlchemy, Sesiones y Health Check SQL
+│   │   │   └── models.py     # Modelos relacionales (PostgreSQL)
 │   │   │   └── mongodb.py    # Cliente NoSQL asíncrono (Motor) y auditoría
-│   │   ├── main.py            # Endpoints, lógica de negocio y Health Checks
-│   │   ├── database.py        # SQLAlchemy, Sesiones y Health Check SQL
-│   │   ├── models.py          # Modelos relacionales (PostgreSQL)
 │   │   └── utils/
+│   │       └── storage.py     # Lógica de interacción con MinIO/S3 (StorageManager)
 │   │       └── validators.py  # Validación de archivos (SRP)
+│   │   ├── main.py            # Endpoints, lógica de negocio y Health Checks
+│   │   ├── schemas.py         # Definición de modelos para validación de entrada/salida (DTOs)
 │   ├── tests/
 │   │   ├── conftest.py        # Fixtures y mocks de entorno
 │   │   └── test_main.py       # Pruebas unitarias e integración
-│   └── docker-compose.yml     # Orquestación (App + Postgres + MongoDB)
+│   └── .dockerignore          # Exclusión de archivos para construcción de la imagen de Python
+│   └── Dockerfile             # Definición de la imagen base y pasos de despliegue 
+│   └── requirements.txt       # Lista de dependencias del proyecto Python
+├── bff-node/
+│   ├── src/
+│   │   ├── adapters/
+│   │       └── document.adapter.ts      # Cliente Axios para comunicación con el Core Service
+│   │   ├── controller/
+│   │       └── document.controllers.ts  # Orquestación de peticiones y manejo de respuestas 
+│   │   ├── middlewares/
+│   │   ├── routes/
+│   │       └── document.routes.ts # Definición de rutas y vinculación con controladores
+│   │   ├── types/
+│   │       └── pagination.types.ts # Interfaces y tipos compartidos
+│   │   ├── index.ts  # Punto de entrada de la aplicación y configuración del servidor Express
+│   ├── .env/         # Variables de entorno específicas para el entorno de ejecución Node.js
+│   ├── Dockerfile     # Definición de la imagen base y pasos de despliegue para el BFF
+│   ├── package.json  # Manifiesto de dependencias y scripts de ejecución de Node.js
+│   ├── tsconfig.json # Reglas de compilación y configuración de tipos de TypeScript
+├── .env              # Variables de entorno globales para la orquestación del proyecto
+├── .gitignore        # Exclusión de archivos para el control de versiones de Git
+├── docker-compose.yml  # Orquestación de contenedores (BFF, Core, DBs y Storage)
 ```    
+
+### Documentación del API Core
+
+El microservicio está documentado siguiendo el estándar OpenAPI 3.0. FastAPI genera automáticamente una interfaz interactiva que sirve como contrato técnico entre el backend y el BFF, permitiendo la exploración de endpoints, tipos de datos y esquemas de respuesta sin necesidad de revisar el código fuente.
+
+<p align="center">
+<img src="./image/Document_Processing_Service_Docs.png" width="800" alt="Swagger UI Core Service">
+</p>
+
 
 ### Gestión de Errores y Estados
 
@@ -116,3 +149,67 @@ El archivo físico se almacena de forma segura conservando la estructura de carp
 <p align="center">
   <img src="./image/minio-proof.png" width="800" alt="minio interface">
 </p>
+
+## Pruebas de Integración (BFF + Core)
+
+Para validar la comunicación entre el BFF (Node.js) y el Core (FastAPI), se realizaron pruebas de flujo completo utilizando Insomnia.
+
+1. Disponibilidad del Sistema (Health Check)
+
+Se verifica que ambos microservicios estén sincronizados y que las bases de datos (PostgreSQL, MongoDB) y el almacenamiento (MinIO) estén operativos.
+
+Endpoint: GET /api/v1/health
+
+<p align="center">
+  <img src="./image/bff-health-status.png" width="800" alt="Health BFF">
+</p>
+
+2. Carga de Documentos (Multipart Form)
+
+Validación de la subida de binarios mediante Multer en el BFF y transmisión hacia el Core.
+
+Endpoint: POST /api/v1/documents/upload
+
+Resultado: Generación de UUID y persistencia en storage.
+
+<p align="center">
+  <img src="./image/bff-upload-file.png" width="800" alt="Upload File">
+</p>
+
+3. Procesamiento de Información
+
+Disparo del motor de procesamiento sobre un documento ya existente.
+
+Endpoint: POST /api/v1/documents/:id/process
+
+Resultado: Cambio de estado a PROCESSED y registro en log de auditoría.
+
+<p align="center">
+  <img src="./image/bff-process-file.png" width="800" alt="Proccess File">
+</p>
+
+4. Consulta de metadatos por ID
+
+Recupera la información detallada de un registro específico mediante su identificador único (UUID).
+
+Endpoint: GET /api/v1/documents/:id
+
+<p align="center">
+<img src="./image/bff-get-document-id.png" width="800" alt="Search document by id">
+</p>
+
+5. Listado de colección con paginación
+
+Permite la visualización de todos los documentos cargados en el sistema con soporte para límites de registros por página.
+
+Endpoint: GET /api/v1/documents
+
+<p align="center">
+<img src="./image/bff-list-of-documents.png" width="800" alt="Show documents list">
+</p>
+
+### Notas Técnicas de la Implementación
+
+- **Orquestación:** El BFF actúa como un intermediario que valida la integridad de los datos antes de delegar la lógica de negocio al Core en Python.
+- **Manejo de Binarios:** Se utiliza `Multer` para la gestión de archivos en memoria, optimizando la velocidad de transferencia hacia el almacenamiento persistente.
+- **Tolerancia a Fallos:** El endpoint de `health` realiza un chequeo en cascada, validando tanto la disponibilidad del BFF como la conectividad de los servicios internos del Core.
