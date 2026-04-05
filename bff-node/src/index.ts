@@ -85,6 +85,6 @@ app.get('/api/v1/dashboard/summary', async (req: Request, res: Response) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`BFF port: ${PORT}`);
+httpServer.listen(PORT, () => {
+  console.log(`BFF (Express + Socket.io) running on port: ${PORT}`);
 });

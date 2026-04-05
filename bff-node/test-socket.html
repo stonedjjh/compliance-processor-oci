@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Socket.io Tester - BFF</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        #status { padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+        .online { background: #d4edda; color: #155724; }
+        .offline { background: #f8d7da; color: #721c24; }
+        .notification { 
+            background: white; border-left: 5px solid #007bff; 
+            padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h2>Panel de Notificaciones (BFF :4000)</h2>
+    <div id="status" class="offline">Estado: Desconectado</div>
+    <div id="logs">
+        <h3>Eventos en tiempo real:</h3>
+    </div>
+
+    <script>        
+        const socket = io("http://localhost:4000/notifications");
+        const statusDiv = document.getElementById('status');
+        const logsDiv = document.getElementById('logs');
+
+        socket.on("connect", () => {
+            statusDiv.innerText = "Estado: Conectado al Namespace /notifications";
+            statusDiv.className = "online";
+            console.log("Conectado con ID:", socket.id);
+        });
+
+        socket.on("disconnect", () => {
+            statusDiv.innerText = "Estado: Desconectado";
+            statusDiv.className = "offline";
+        });
+
+        // Escuchamos el evento que configuramos en el Webhook del BFF
+        socket.on("document_processed", (data) => {
+            console.log("Data recibida:", data);
+            const div = document.createElement('div');
+            div.className = 'notification';
+            div.innerHTML = `
+                <strong>📄 Documento Procesado</strong><br>
+                ID: ${data.documentId}<br>
+                Estado: ${data.status}<br>
+                <small>${new Date(data.timestamp).toLocaleString()}</small>
+            `;
+            logsDiv.prepend(div); // Ponemos la más reciente arriba
+        });
+    </script>
+</body>
+</html>
