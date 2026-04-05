@@ -1,4 +1,5 @@
 import uuid
+import os
 from fastapi import (
     FastAPI,
     File,
@@ -19,6 +20,23 @@ from datetime import datetime, timezone
 
 from app.utils.storage import StorageManager, storage_manager
 
+from fastapi import Security
+from fastapi.security.api_key import APIKeyHeader
+
+API_KEY_NAME = "X-API-KEY"
+API_KEY_SECRET = os.getenv("API_KEY_SECRET", "mi_clave_secreta_super_segura_123")
+
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+
+async def get_api_key(api_key_header_value: str = Security(api_key_header)):
+    if api_key_header_value == API_KEY_SECRET:
+        return api_key_header_value
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="No tienes permisos para acceder a este recurso (API Key inválida)",
+    )
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -31,7 +49,7 @@ def read_root():
 
 
 # Endpoint para verificar el estado del servicio
-@app.get("/api/v1/health")
+@app.get("/api/v1/health", status_code=status.HTTP_200_OK)
 async def health_check(db: Session = Depends(get_db)):
     # Verificamos ambos corazones
     postgres_ok = check_postgres_connection(db)
@@ -62,7 +80,11 @@ async def health_check(db: Session = Depends(get_db)):
     )
 
 
-@app.post("/api/v1/documents/upload", status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/api/v1/documents/upload",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Security(get_api_key)],
+)
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
     filename = file.filename
@@ -137,6 +159,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     "/api/v1/documents",
     response_model=list[schemas.DocumentOut],
     status_code=status.HTTP_200_OK,
+    dependencies=[Security(get_api_key)],
 )
 async def get_documents(
     skip: int = Query(0, ge=0),
@@ -157,6 +180,7 @@ async def get_documents(
     "/api/v1/documents/{id}",
     response_model=schemas.DocumentOut,
     status_code=status.HTTP_200_OK,
+    dependencies=[Security(get_api_key)],
 )
 async def get_document(id: uuid.UUID, db: Session = Depends(database.get_db)):
     try:
@@ -171,7 +195,11 @@ async def get_document(id: uuid.UUID, db: Session = Depends(database.get_db)):
         raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
-@app.post("/api/v1/documents/{id}/process", status_code=status.HTTP_200_OK)
+@app.post(
+    "/api/v1/documents/{id}/process",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(get_api_key)],
+)
 async def process_document(id: uuid.UUID, db: Session = Depends(database.get_db)):
     db_document = db.query(models.Document).filter(models.Document.id == id).first()
 

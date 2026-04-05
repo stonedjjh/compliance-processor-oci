@@ -4,6 +4,7 @@ import { PaginationLimit, PaginationParams } from '../types/pagination.types';
 
 export class DocumentAdapter {
   private client: AxiosInstance;
+  private readonly apiKey = process.env.API_KEY_SECRET || "mi_clave_secreta_super_segura_123";
 
   constructor() {
     this.client = axios.create({
@@ -37,6 +38,7 @@ export class DocumentAdapter {
       const response = await this.client.post('/api/v1/documents/upload', form, {
         headers: {
           ...form.getHeaders(),
+          'X-API-KEY': this.apiKey
         },
       });
 
@@ -56,7 +58,10 @@ export class DocumentAdapter {
     };    
 
     const response = await this.client.get('/api/v1/documents', {
-      params
+      params,
+        headers: {          
+          'X-API-KEY': this.apiKey
+        },
     });
     return response.data;
     } catch (error: any) {
@@ -67,7 +72,11 @@ export class DocumentAdapter {
 
   getDocumentById = async (id: string) => {
     try {
-      const response = await this.client.get(`/api/v1/documents/${id}`);
+      const response = await this.client.get(`/api/v1/documents/${id}`, {
+        headers: {
+          'X-API-KEY': this.apiKey
+        }
+      });
       return response.data;
     } catch (error: any) {
       console.error(`Error al obtener documento ${id}:`, error.response?.data || error.message);
@@ -77,7 +86,11 @@ export class DocumentAdapter {
 
   processDocument = async (id: string) => {
     try {      
-      const response = await this.client.post(`/api/v1/documents/${id}/process`);
+      const response = await this.client.post(`/api/v1/documents/${id}/process`, null, {
+        headers: {
+          'X-API-KEY': this.apiKey
+        }
+      });
       return response.data;
     } catch (error: any) {
       console.error(`Error disparando proceso para ${id}:`, error.response?.data || error.message);
