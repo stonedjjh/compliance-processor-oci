@@ -4,6 +4,8 @@ import os
 import pytest
 
 client = TestClient(app)
+API_KEY_SECRET = os.getenv("API_KEY_SECRET", "mi_clave_super_secreta_123")
+HEADERS = {"X-API-KEY": API_KEY_SECRET}
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -39,6 +41,7 @@ def test_upload_file():
     response = client.post(
         "/api/v1/documents/upload",
         files={"file": (file_name, file_content, "application/pdf")},
+        headers=HEADERS,
     )
 
     assert response.status_code == 201
@@ -56,13 +59,14 @@ def test_upload_and_get_document_strict():
     response_upload = client.post(
         "/api/v1/documents/upload",
         files={"file": (file_name, file_content, "application/pdf")},
+        headers=HEADERS,
     )
 
     assert response_upload.status_code == 201
     document_id = response_upload.json()["id"]
 
     # 2. Consultamos el detalle
-    get_response = client.get(f"/api/v1/documents/{document_id}")
+    get_response = client.get(f"/api/v1/documents/{document_id}", headers=HEADERS)
     assert get_response.status_code == 200
 
     detail_data = get_response.json()
@@ -78,9 +82,10 @@ def test_get_documents_pagination():
         client.post(
             "/api/v1/documents/upload",
             files={"file": (f"test_{i}.pdf", file_content, "application/pdf")},
+            headers=HEADERS,
         )
 
-    response = client.get("/api/v1/documents?skip=0&limit=5")
+    response = client.get("/api/v1/documents?skip=0&limit=5", headers=HEADERS)
 
     assert response.status_code == 200
     data = response.json()
@@ -91,14 +96,14 @@ def test_get_documents_pagination():
 
 def test_get_documents_empty_pagination():
     # Probamos un salto mayor al número de registros
-    response = client.get("/api/v1/documents?skip=100&limit=10")
+    response = client.get("/api/v1/documents?skip=100&limit=10", headers=HEADERS)
     assert response.status_code == 200
     assert response.json() == []
 
 
 def test_get_documents_invalid_limit():
     # Probamos enviar un límite no permitido (ej. 7)
-    response = client.get("/api/v1/documents?skip=0&limit=7")
+    response = client.get("/api/v1/documents?skip=0&limit=7", headers=HEADERS)
 
     assert response.status_code == 422
 
@@ -114,10 +119,14 @@ def test_process_document_success():
     response_up = client.post(
         "/api/v1/documents/upload",
         files={"file": ("test.pdf", file_content, "application/pdf")},
+        headers=HEADERS,
     )
     doc_id = response_up.json()["id"]
 
-    response_proc = client.post(f"/api/v1/documents/{doc_id}/process")
+    response_proc = client.post(
+        f"/api/v1/documents/{doc_id}/process",
+        headers=HEADERS,
+    )
 
     assert response_proc.status_code == 200
     assert response_proc.json()["status"] == "PROCESSED"
@@ -129,12 +138,13 @@ def test_process_document_already_processed():
     response_up = client.post(
         "/api/v1/documents/upload",
         files={"file": ("test2.pdf", file_content, "application/pdf")},
+        headers=HEADERS,
     )
     doc_id = response_up.json()["id"]
 
-    client.post(f"/api/v1/documents/{doc_id}/process")
+    client.post(f"/api/v1/documents/{doc_id}/process", headers=HEADERS)
 
-    response_re = client.post(f"/api/v1/documents/{doc_id}/process")
+    response_re = client.post(f"/api/v1/documents/{doc_id}/process", headers=HEADERS)
 
     assert response_re.status_code == 200
     assert "ya fue procesado" in response_re.json()["message"]

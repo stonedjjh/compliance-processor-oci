@@ -22,6 +22,7 @@ from app.utils.storage import StorageManager, storage_manager
 
 from fastapi import Security
 from fastapi.security.api_key import APIKeyHeader
+from app.utils.notifier import notify_document_processed
 
 API_KEY_NAME = "X-API-KEY"
 API_KEY_SECRET = os.getenv("API_KEY_SECRET", "mi_clave_secreta_super_segura_123")
@@ -227,6 +228,12 @@ async def process_document(id: uuid.UUID, db: Session = Depends(database.get_db)
                 "document_id": str(id),
                 "details": {"status": "PROCESSED", "executor": "system_v1"},
             }
+        )
+
+        await notify_document_processed(
+            document_id=str(id),
+            status="COMPLETED",
+            message="Análisis de cumplimiento finalizado",
         )
 
         return db_document
