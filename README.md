@@ -23,7 +23,7 @@ Este servicio es el punto de entrada para la gestión de archivos. Utiliza FastA
 ### Características Principales
 - **Validación Modular (SRP):** Lógica de validación desacoplada del punto de entrada en `app/utils/validators.py`.
 - **Seguridad de Infraestructura:** Aunque no formaba parte de los requerimientos iniciales, se implementó una restricción de **tamaño máximo de 10MB** por archivo para prevenir ataques de denegación de servicio (DoS) y optimizar el almacenamiento.
-- **Observabilidad (Health Checks):** Endpoint dinámico /api/v1/health que monitorea en tiempo real la conectividad de PostgreSQL y MongoDB, devolviendo estados 503 ante fallos de infraestructura.
+- **Observabilidad (Health Checks):** Endpoint dinámico /api/v1/health que monitorea en tiempo real monitorea en tiempo real el 'Triángulo de Persistencia' (PostgreSQL, MongoDB y MinIO),  devolviendo estados 503 ante fallos de infraestructura.
 - **Control de Extensiones:** Sistema flexible basado en listas blancas que permite restringir tipos de archivos (configurado actualmente para permitir todos mediante `*`).
 - **Base de Datos Aislada para Pruebas:** Configuración de `pytest` con esquemas dinámicos de PostgreSQL para garantizar que los tests no afecten los datos de desarrollo.
 
@@ -70,6 +70,7 @@ Usa el siguiente comando desde la raíz del proyecto `service-doc-proc`:
 ```bash
 docker exec -it doc_processor_app pytest tests/test_main.py
 ```
+
 <p align="center">
   <img src="./image/document_processor_text_result.png" width="800" alt="Resultado de Tests Pytest">
 </p>
@@ -79,3 +80,39 @@ docker exec -it doc_processor_app pytest tests/test_main.py
 - **Patrón Adapter**: Se ha implementado el Patrón Adapter en los clientes de base de datos (app/database.py para SQL y app/internal/mongodb.py para NoSQL). Esto permite que, si en el futuro se decide cambiar SQLAlchemy o el driver de Mongo, la lógica de negocio en main.py permanezca inalterada, modificando únicamente la implementación del adaptador.
 
 - **Organización DDD**: Se ha considerado una estructura basada en DDD (Domain-Driven Design), pero dado el tamaño y alcance actual de este servicio único, se ha optado por una estructura modular más ligera para evitar sobreingeniería, priorizando la claridad y la rapidez de desarrollo.
+
+
+## Demostración de Trazabilidad End-to-End
+
+Para garantizar la integridad de los datos, el sistema sincroniza cada carga en tres capas distintas utilizando un identificador único (UUID).
+
+1. Carga mediante API (FastAPI)
+
+El endpoint /upload procesa el archivo, lo sube a la infraestructura de almacenamiento y retorna los metadatos unificados.
+
+<p align="center">
+  <img src="./image/upload_file.png" width="800" alt="swagger interface">
+</p>
+
+
+2. Persistencia Relacional (PostgreSQL)
+
+Se registra la metadata principal y la ruta lógica del archivo para consultas rápidas y gestión de estados.
+
+<p align="center">
+  <img src="./image/postgresql-proof.png" width="800" alt="postgresql terminal">
+</p>
+
+3. Auditoría Documental (MongoDB)
+Cada evento se registra de forma inmutable para fines de cumplimiento y auditoría, almacenando el contexto del evento.
+
+<p align="center">
+  <img src="./image/mongodb-proof.png" width="800" alt="mongodb terminal">
+</p>
+
+4. Almacenamiento de Objetos (MinIO)
+El archivo físico se almacena de forma segura conservando la estructura de carpetas definida por el storage_path.
+
+<p align="center">
+  <img src="./image/minio-proof.png" width="800" alt="minio interface">
+</p>
