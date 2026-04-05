@@ -17,7 +17,7 @@ COPY . .
 # Compilamos el código TypeScript a JavaScript (genera la carpeta /dist)
 RUN npm run build
 
-EXPOSE 3000
+EXPOSE 4000
 
 # Ejecutamos el código compilado
 CMD ["npm", "start"]

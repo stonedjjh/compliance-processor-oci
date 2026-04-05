@@ -83,12 +83,12 @@ services:
       - frontend-network
       - backend-network
     ports:
-      - "3000:3000"
+      - "4000:4000"
     env_file:
       - ./bff-node/.env
     environment:
       - DOCUMENT_PROCESSOR_URL=http://doc_processor_app:8000
-      - PORT=3000
+      - PORT=4000
   
 
 networks:
