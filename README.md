@@ -218,6 +218,123 @@ Nota: El archivo test-socket.html se incluye exclusivamente como Prueba de Conce
 
 - **Tolerancia a Fallos:** El endpoint de `health` realiza un chequeo en cascada, validando tanto la disponibilidad del BFF como la conectividad de los servicios internos del Core.
 
+## Integración Continua (CI)
+
+Se ha implementado un pipeline de validación automatizada mediante GitHub Actions que actúa como el "guardián" de la calidad del código. Este flujo garantiza que cualquier cambio propuesto en la rama main sea funcional y seguro antes de ser integrado.
+
+### Flujo de Validación Automatizada
+
+Cada vez que se realiza un `push` o un `Pull Request` hacia la rama principal, el sistema dispara un flujo de trabajo en un entorno efímero de Linux que recrea la infraestructura completa:
+
+- **Aislamiento de Entorno:** Se levanta la arquitectura completa (PostgreSQL, MongoDB, MinIO y el Document Processor) utilizando Docker Compose dentro del Runner de GitHub.
+
+- **Inyección Dinámica de Secretos:** Gestión segura de credenciales mediante GitHub Actions Secrets, evitando la exposición de API Keys o contraseñas de bases de datos.
+
+- **Validación de Salud (Health Checks):** El pipeline espera activamente a que todos los servicios internos reporten un estado `healthy` antes de proceder, asegurando que no haya errores de conectividad.
+
+- **Suite de Pruebas de Integración:** Ejecución de pytest directamente dentro del contenedor del microservicio para validar:
+
+  - Autenticación S2S (X-API-KEY).
+
+  - Persistencia real en las tres capas (SQL, NoSQL, S3).
+
+  - Lógica de negocio y manejo de excepciones.
+
+### Arquitectura del Pipeline
+
+1. **Build:** Construcción de las imágenes de Docker del BFF y el Core.
+
+2. **Provision:** Despliegue de contenedores de infraestructura (Postgres, Mongo, MinIO).
+
+3. **Wait & Check:** Verificación de disponibilidad de servicios.
+
+4. **Test:** Ejecución de tests de integración y linters.
+
+### Evidencia de Pipeline Exitoso
+
+El cumplimiento de los estándares de código y la integridad de la infraestructura se visualizan directamente en la pestaña de Actions de GitHub:
+
+<p align="center">
+<img src="./image/github-action-ci.png" width="800" alt="GitHub Actions Success">
+</p>
+
+[!NOTE]
+Estado del Despliegue (CD): Actualmente el flujo está enfocado exclusivamente en Integración Continua (CI). El despliegue a los compartimentos de Oracle Cloud Infrastructure (OCI) se mantiene como una fase manual controlada para asegurar la revisión humana de los reportes de cumplimiento generados por los tests.
+
+##  Guía de Inicio Rápido (Local)
+
+Siga estos pasos para levantar el ecosistema completo en su máquina local utilizando Docker. El sistema configurará automáticamente las redes internas y volúmenes de persistencia.
+
+### 1. Clonar el Repositorio
+
+```bash
+git clone https://github.com/stonedjjh/compliance-processor-oci.git
+cd compliance-processor-oci
+```
+
+### 2. Configuración de Variables de Entorno
+
+El proyecto utiliza una arquitectura de 12-factor app. Debe configurar los archivos .env en tres niveles (puede usar los archivos .env.example como base):
+
+1. **Raíz del proyecto:** Configure el archivo .env para la orquestación de bases de datos y almacenamiento.
+
+2. **BFF (/bff-node):** Configure el .env con las credenciales para conectar con el Core Service y configurar Socket.io.
+
+3. **Frontend (/frontend-react):** Configure el .env con la URL del BFF (VITE_API_URL).
+
+```bash 
+# Ejemplo rápido para copiar los archivos de ejemplo (en sistemas Unix/WSL)
+cp .env.example .env
+cp bff-node/.env.example bff-node/.env
+cp frontend-react/.env.example frontend-react/.env
+```
+
+> [!TIP]
+> Asegúrese de que el API_KEY_SECRET sea idéntico en el .env de la raíz y del BFF para que el Handshake de seguridad funcione.
+
+### 3. Ejecución con Docker Compose
+
+Desde la raíz del proyecto, ejecute el siguiente comando. Docker construirá las imágenes del frontend (Multi-stage con Nginx), el BFF (Node.js) y el Core (FastAPI).
+
+```bash 
+docker-compose up --build
+```
+
+### Seguridad y Acceso a Herramientas
+
+Para alinearse con las mejores prácticas de **Cloud Security**, los puertos de administración directa están expuestos pero comentados en el archivo `docker-compose.yml`. Esto simula un entorno donde el acceso a la infraestructura solo se permite mediante canales seguros.
+
+- **MinIO Console (Visualizador de S3)**: Permite verificar la persistencia física de los archivos. Para acceder, busque la sección de `minio` en el compose y descomente el mapeo del puerto `9001:9001`.
+- **Swagger UI (Documentación Core)**: Facilita la prueba manual de los endpoints del microservicio de Python. Para acceder, descomente el puerto `8000:8000` en el servicio `core-proc`.
+
+Una vez habilitados, podrá acceder en:
+- **MinIO**: `http://localhost:9001`
+- **Swagger**: `http://localhost:8000/docs`
+
+---
+
+### Validación Estricta de Documentos (Security-First)
+
+Aunque no se especificó en los requerimientos iniciales, se ha implementado una capa de validación de integridad en el punto de entrada de `main.py` para prevenir la carga de archivos maliciosos o no deseados.
+
+Actualmente, el sistema solo acepta extensiones de uso administrativo:
+
+```python
+# Ubicación: main.py
+validate_file_upload(content, filename, allowed_extensions=[".pdf", ".docx"])
+```
+
+**¿Cómo modificar la política de validación?:**
+
+Si desea flexibilizar o restringir aún más los tipos de archivos permitidos, puede modificar el parámetro `allowed_extensions`:
+
+1. Permitir todos los tipos: Cambie el valor a `["*"]`. El validador interpretará el comodín y omitirá la restricción de extensión.
+
+2. Agregar nuevos tipos: Simplemente añada la extensión al array (ej. `[".pdf", ".docx", ".jpg"]`).
+
+> [!NOTE]
+> Cualquier archivo que no cumpla con esta lista blanca devolverá un código **400 Bad Request**, protegiendo el almacenamiento de objetos de datos no procesables.
+
 ## Estructura del Proyecto
 
 ```text
