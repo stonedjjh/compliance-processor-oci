@@ -32,13 +32,17 @@ jobs:
 
       - name: Set up Infrastructure (Docker Compose)
         run: |
-          # Levantamos todo el stack
+          # Usamos --no-deps o simplemente ignoramos el estado healthy para que no aborte
           docker compose up -d
           
-          # Esperamos a que los healthchecks pasen (30-40s es lo ideal en GH)
-          echo "Esperando estabilidad de red interna..."
-          sleep 40
-          docker ps
+          # En lugar de confiar en el healthcheck de Docker, 
+          # esperamos nosotros manualmente un tiempo razonable
+          echo "Dando 45 segundos para que los servicios e internos de la App estabilicen..."
+          sleep 45
+          
+          # Vemos qué pasó con el contenedor
+          docker ps -a
+          docker logs doc_processor_app
 
       - name: Run Integration Tests (Inside Container)
         env:
