@@ -82,12 +82,14 @@ jobs:
           MONGO_DB_NAME: audit_db
           MONGO_URL: mongodb://${{ secrets.MONGO_INITDB_ROOT_USERNAME }}:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@mongodb:27017/audit_db?authSource=admin
           
-          # CAMBIO CLAVE: Aquí usamos 'minio' porque estamos DENTRO de la red de Docker          
-          STORAGE_HOST: http://minio:9000          
+          # CAMBIO CLAVE: Aquí usamos 'minio' porque estamos DENTRO de la red de Docker                    
           STORAGE_BUCKET_NAME: documents
+          STORAGE_HOST: http://minio
+          STORAGE_PORT: 9000          
           
           API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
         run: |
           # Ejecutamos el linter y los tests en una sola ráfaga dentro del contenedor
+          docker compose exec -T document-processor pip install flake8 pytest httpx
           docker compose exec -T document-processor flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           docker compose exec -T document-processor pytest -v
