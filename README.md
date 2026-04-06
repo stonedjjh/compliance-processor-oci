@@ -230,9 +230,9 @@ compliance-processor-oci/
 │   │   │   └── models.py     # Modelos relacionales (PostgreSQL)
 │   │   │   └── mongodb.py    # Cliente NoSQL asíncrono (Motor) y auditoría
 │   │   └── utils/
-│   │       └── notifier.py    # Lógica de notificación de eventos en tiempo real.
-│   │       └── storage.py     # Lógica de interacción con MinIO/S3 (StorageManager)
-│   │       └── validators.py  # Validación de archivos (SRP)
+│   │   │   └── notifier.py    # Lógica de notificación de eventos en tiempo real.
+│   │   │   └── storage.py     # Lógica de interacción con MinIO/S3 (StorageManager)
+│   │   │   └── validators.py  # Validación de archivos (SRP)
 │   │   ├── main.py            # Endpoints, lógica de negocio y Health Checks
 │   │   ├── schemas.py         # Definición de modelos para validación de entrada/salida (DTOs)
 │   ├── tests/
@@ -244,19 +244,41 @@ compliance-processor-oci/
 ├── bff-node/
 │   ├── src/
 │   │   ├── adapters/
-│   │       └── document.adapter.ts      # Cliente Axios para comunicación con el Core Service
-│   │   ├── controller/
-│   │       └── document.controllers.ts  # Orquestación de peticiones y manejo de respuestas 
+│   │   │   └── document.adapter.ts      # Cliente Axios para comunicación con el Core Service
+│   │   │── controller/
+│   │   │   └── document.controllers.ts  # Orquestación de peticiones y manejo de respuestas 
 │   │   ├── middlewares/
-│   │   ├── routes/
-│   │       └── document.routes.ts # Definición de rutas y vinculación con controladores
-│   │   ├── types/
-│   │       └── pagination.types.ts # Interfaces y tipos compartidos
+│   │   │── routes/
+│   │   │   └── document.routes.ts # Definición de rutas y vinculación con controladores
+│   │   │── types/
+│   │   │   └── pagination.types.ts # Interfaces y tipos compartidos
 │   │   ├── index.ts  # Punto de entrada de la aplicación y configuración del servidor Express
 │   ├── .env/         # Variables de entorno específicas para el entorno de ejecución Node.js
 │   ├── Dockerfile     # Definición de la imagen base y pasos de despliegue para el BFF
 │   ├── package.json  # Manifiesto de dependencias y scripts de ejecución de Node.js
 │   ├── tsconfig.json # Reglas de compilación y configuración de tipos de TypeScript
+├── frontend-react/
+│   ├── public/
+│   ├── src/
+│   │   ├── api/
+│   │   │   └── axios.config.ts
+│   │   │   └── documentApi.ts
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├──UploadBox
+│   │   │   ├  └── UploadBox.module.css
+│   │   │   ├  └── UploadBox.tsx
+│   │   ├── context/
+│   │   │   └── SocketContext.tsx
+│   │   ├── hook/
+│   │   │   └── useSocket.tsx
+│   │   ├── type/
+│   │   │   └── document.tsx
+│   │   │   └── socket.tsx
+│   ├── App.css
+│   ├── App.tsx
+│   ├── index.tsx
+│   ├── main.tsx
 ├── .env              # Variables de entorno globales para la orquestación del proyecto
 ├── .gitignore        # Exclusión de archivos para el control de versiones de Git
 ├── docker-compose.yml  # Orquestación de contenedores (BFF, Core, DBs y Storage)
