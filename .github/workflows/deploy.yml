@@ -67,9 +67,9 @@ jobs:
           MONGO_DB_NAME: audit_db
           MONGO_URL: mongodb://${{ secrets.MONGO_INITDB_ROOT_USERNAME }}:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@mongodb:27017/audit_db?authSource=admin
           
-          # CAMBIO CLAVE: Aquí usamos 'minio' porque estamos DENTRO de la red de Docker
+          # CAMBIO CLAVE: Aquí usamos 'minio' porque estamos DENTRO de la red de Docker          
           STORAGE_HOST: http://minio
-          STORAGE_PORT:  ${{ secrets.STORAGE_ROOT_PORT }}
+          STORAGE_PORT:  ${{ secrets.STORAGE_PORT }}
           STORAGE_BUCKET_NAME: documents
           
           API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
