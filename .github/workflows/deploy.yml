@@ -2,10 +2,20 @@ name: CI - Service Validation
 
 on:
   push:
-    branches: [ main, feature/ci-setup ]
+    branches: [ main ]
+    # Con esto evitamos que corra por cambios en documentación o ejemplos
+    paths:
+      - 'service-doc-proc/**'
+      - 'bff-node/**'
+      - 'frontend-react/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
+    paths:
+      - 'service-doc-proc/**'
+      - 'bff-node/**'
+      - 'frontend-react/**'
 
 jobs:
   test-and-lint:
