@@ -32,17 +32,22 @@ jobs:
 
       - name: Set up Infrastructure (Docker Compose)
         run: |
-          # Usamos --no-deps o simplemente ignoramos el estado healthy para que no aborte
-          docker compose up -d
+          # Levantamos pero sin que el healthcheck detenga el pipeline inmediatamente
+          docker compose up -d || true
           
-          # En lugar de confiar en el healthcheck de Docker, 
-          # esperamos nosotros manualmente un tiempo razonable
-          echo "Dando 45 segundos para que los servicios e internos de la App estabilicen..."
-          sleep 45
+          echo "Esperando 30 segundos para capturar logs de error..."
+          sleep 30
           
-          # Vemos qué pasó con el contenedor
-          docker ps -a
+          # ESTO ES LO MÁS IMPORTANTE: Ver por qué falló la app
+          echo "--- LOGS DE DOCUMENT PROCESSOR ---"
           docker logs doc_processor_app
+          
+          echo "--- ESTADO DE CONTENEDORES ---"
+          docker ps -a
+          
+          # Si el contenedor está muerto, este comando hará que el paso falle 
+          # pero ya habremos visto los logs arriba.
+          docker compose ps | grep "doc_processor_app" | grep "Up"
 
       - name: Run Integration Tests (Inside Container)
         env:
