@@ -16,10 +16,13 @@ jobs:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      STORAGE_ROOT_USER: ${{ secrets.STORAGE_ROOT_USER }}
+      STORAGE_ROOT_USER: ${{ secrets.STORAGE_ROOT_USER }}      
       STORAGE_ROOT_PASSWORD: ${{ secrets.STORAGE_ROOT_PASSWORD }}
       MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db-relational:5432/${{ secrets.POSTGRES_DB }}
+      MONGO_URL: mongodb://${{ secrets.MONGO_INITDB_ROOT_USERNAME }}:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@mongodb:27017
+
 
     steps:
       - name: Checkout code
@@ -66,7 +69,7 @@ jobs:
           
           # CAMBIO CLAVE: Aquí usamos 'minio' porque estamos DENTRO de la red de Docker
           STORAGE_HOST: http://minio
-          STORAGE_PORT: 9000
+          STORAGE_PORT:  ${{ secrets.STORAGE_ROOT_PORT }}
           STORAGE_BUCKET_NAME: documents
           
           API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
