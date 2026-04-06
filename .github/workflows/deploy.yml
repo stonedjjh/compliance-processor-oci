@@ -1,0 +1,66 @@
+name: CI - Service Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Razón del disparo manual'
+        required: false
+        default: 'Prueba manual de CI'  
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    
+    # Definimos las variables de entorno para que los contenedores las usen
+    env:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      STORAGE_ROOT_USER: ${{ secrets.STORAGE_ROOT_USER }}
+      STORAGE_ROOT_PASSWORD: ${{ secrets.STORAGE_ROOT_PASSWORD }}
+      MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
+      MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Infrastructure (Docker Compose)
+        run: |
+          # Levantamos solo lo necesario para los tests del processor
+          docker compose up -d db-relational mongodb minio
+          # Damos tiempo a que levanten las bases de datos
+          sleep 15
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r service-doc-proc/requirements.txt
+          pip install pytest httpx flake8
+
+      - name: Run Linter (Style Check)
+        run: |
+          # Esto demuestra que te importa la calidad del código
+          flake8 service-doc-proc --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Run Integration Tests
+        env:
+          # Estas URLs deben apuntar a localhost porque el runner de GH 
+          # accede a los puertos mapeados por Docker Compose
+          DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
+          MONGO_URL: mongodb://${{ secrets.MONGO_INITDB_ROOT_USERNAME }}:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@localhost:27017
+          API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
+          ENV: test
+        run: |
+          cd service-doc-proc
+          pytest -v
