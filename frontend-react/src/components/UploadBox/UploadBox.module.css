@@ -4,3 +4,20 @@
   border-radius: 10px;
   margin-top: 20px;
 }
+
+.status_message {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: bold;
+
+  &.error {
+    background-color: #f87171;
+    color: white;
+  }
+
+  &.success {
+    background-color: #60a5fa;
+    color: white;
+  }
+}

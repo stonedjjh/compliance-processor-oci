@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { documentApi } from '../../api/documentApi';
 import styles from './UploadBox.module.css';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 export const UploadBox = () => {
   const [loading, setLoading] = useState(false);
@@ -45,8 +45,19 @@ export const UploadBox = () => {
   return (
     <div className={styles.file_input}>
       <h3>Subir Nuevo Documento</h3>
-      <input type="file" onChange={handleFileChange} disabled={loading} />
-      {loading && <p>Subiendo y enviando a procesar...</p>}
+      <input 
+        type="file" 
+        onChange={handleFileChange} 
+        disabled={loading} 
+        accept=".pdf,.jpg,.jpeg,.png" 
+      />
+      
+      {/* Mostramos el mensaje de estado (ya sea carga, éxito o error) */}
+      {statusMessage && (
+        <p className={statusMessage.isError ? styles.status_message + ' ' + styles.error : styles.status_message + ' ' + styles.success}>
+          {statusMessage.text}
+        </p>
+      )}
     </div>
   );
 };
