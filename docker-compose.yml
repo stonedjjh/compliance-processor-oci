@@ -99,7 +99,13 @@ networks:
     name: frontend-network
     driver: bridge
 
-volumes:
+volumes:  
   postgres_data:
+    driver: local
+    name: postgres_data
   mongo_data:
+    driver: local
+    name: mongo_data
   minio_data:
+    driver: local
+    name: minio_data

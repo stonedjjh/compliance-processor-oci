@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react'; // 1. Importamos useRef
 import { documentApi } from '../../api/documentApi';
 import styles from './UploadBox.module.css';
 import axios from 'axios';
@@ -7,36 +7,53 @@ export const UploadBox = () => {
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string, isError: boolean } | null>(null);
   
+  // Referencia para el input de tipo file
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     
     setLoading(true);
     setStatusMessage({ text: "Subiendo archivo...", isError: false });
+
     try {
       const file = e.target.files[0];
-      const { data } = await documentApi.uploadDocument(file);
-      setStatusMessage({ text: "Archivo aceptado. Procesando...", isError: false });
+      // Subimos el documento (esto disparará el Socket con status 'Recibido')
+      await documentApi.uploadDocument(file);
       
-      // Opcional: Disparar el proceso automáticamente después de subir
-      await documentApi.processDocument(data.id);
-    } catch (error: unknown) {
+      setStatusMessage({ text: "¡Archivo subido con éxito!", isError: false });
 
+      // 2. Limpiar el campo de archivo inmediatamente tras el éxito
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      // 3. Hacer que el mensaje de éxito desaparezca tras 4 segundos
+      setTimeout(() => {
+        setStatusMessage(null);
+      }, 4000);
+
+    } catch (error: unknown) {
       let errorMessage = "Error inesperado en el servidor";
 
       if (axios.isAxiosError(error)) {
-  
         errorMessage = error.response?.data?.message 
                       || error.response?.data?.error 
                       || "Error en la comunicación con el servidor";
       } else if (error instanceof Error) {
-        // Si es un error normal de JS (como un error de sintaxis o de red nativo)
         errorMessage = error.message;
       }
+
       setStatusMessage({ 
-      text: `${errorMessage}`, 
-      isError: true 
-    });
+        text: `${errorMessage}`, 
+        isError: true 
+      });
+
+      // También limpiamos el mensaje de error tras 6 segundos para no ensuciar la UI
+      setTimeout(() => {
+        setStatusMessage(null);
+      }, 6000);
+
     } finally {
       setLoading(false);
     }
@@ -46,13 +63,13 @@ export const UploadBox = () => {
     <div className={styles.file_input}>
       <h3>Subir Nuevo Documento</h3>
       <input 
+        ref={fileInputRef} // 4. Asignamos la referencia
         type="file" 
         onChange={handleFileChange} 
         disabled={loading} 
-        accept=".pdf,.jpg,.jpeg,.png" 
+        accept=".pdf,.docx" 
       />
       
-      {/* Mostramos el mensaje de estado (ya sea carga, éxito o error) */}
       {statusMessage && (
         <p className={statusMessage.isError ? styles.status_message + ' ' + styles.error : styles.status_message + ' ' + styles.success}>
           {statusMessage.text}
@@ -61,4 +78,3 @@ export const UploadBox = () => {
     </div>
   );
 };
-

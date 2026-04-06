@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 from enum import IntEnum
+from datetime import datetime
 
 
 class PageLimit(IntEnum):
@@ -15,5 +16,5 @@ class DocumentOut(BaseModel):
     status: str
     storage_path: str | None = None
     content_type: str | None = None
-
+    created_at: datetime     
     model_config = ConfigDict(from_attributes=True)

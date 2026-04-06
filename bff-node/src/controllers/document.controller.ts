@@ -16,6 +16,15 @@ export const uploadDocument = async (req: Request, res: Response) => {
       req.file.mimetype
     );
 
+    if ((req as any).io) {
+      (req as any).io.emit('document_processed', {
+        documentId: result.id,
+        status: 'Recibido', // <--- Estado inicial real
+        filename: result.filename,
+        timestamp: new Date().toISOString() // <--- Esto quita el "Procesando..."
+      });
+    }
+
     res.status(201).json(result);
   } catch (error: any) {
     res.status(500).json({ 
@@ -80,8 +89,26 @@ export const processDocument = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'ID requerido para procesar' });
     }
 
-    const data = await docAdapter.processDocument(id);
-    res.json(data);
+    // 1. Llamamos al adaptador para procesar en el Core (Python)
+    const result = await docAdapter.processDocument(id);
+    
+    // 2. Extraemos la data de la respuesta del adaptador
+    // Nota: 'result' suele tener la estructura { id, status, filename... }
+    const docData = result; 
+
+    // 3. Emitimos por Socket.io usando Type Casting para evitar error de TS
+    if ((req as any).io) {
+      (req as any).io.emit('document_processed', {
+        documentId: id,
+        status: 'PROCESSED', // Cambiamos a PROCESSED porque esta es la ruta de proceso
+        filename: docData.filename || 'Archivo', 
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 4. Respondemos al cliente
+    res.json(docData);
+
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

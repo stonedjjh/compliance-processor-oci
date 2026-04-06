@@ -107,9 +107,15 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
             content, unique_filename, file.content_type or "application/octet-stream"
         )
 
+        try:
+            original_filename = file.filename.encode('latin-1').decode('utf-8')
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            original_filename = file.filename
+
+        
         new_doc = models.Document(
             id=file_id,
-            filename=file.filename,
+            filename=original_filename,
             content_type=file.content_type,
             status="Recibido",
             storage_path=storage_path,
@@ -151,7 +157,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
         "message": "Archivo subido y registrado exitosamente",
         "id": file_id,
         "status": "Recibido",
-        "filename": file.filename,
+        "filename": original_filename,
         "storage_path": storage_path,
     }
 
@@ -232,7 +238,7 @@ async def process_document(id: uuid.UUID, db: Session = Depends(database.get_db)
 
         await notify_document_processed(
             document_id=str(id),
-            status="COMPLETED",
+            status="PROCESSED",
             message="Análisis de cumplimiento finalizado",
         )
 
