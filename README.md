@@ -261,6 +261,55 @@ El cumplimiento de los estándares de código y la integridad de la infraestruct
 [!NOTE]
 Estado del Despliegue (CD): Actualmente el flujo está enfocado exclusivamente en Integración Continua (CI). El despliegue a los compartimentos de Oracle Cloud Infrastructure (OCI) se mantiene como una fase manual controlada para asegurar la revisión humana de los reportes de cumplimiento generados por los tests.
 
+## Frontend - Dashboard de Monitoreo (React + TypeScript)
+
+La interfaz de usuario ha sido diseñada como un Single Page Application (SPA) reactivo, priorizando la observabilidad de los estados de cumplimiento en tiempo real.
+
+### Tecnologías Clave
+
+- **Vite:** Para un entorno de desarrollo ultrarrápido y builds optimizados.
+
+- **Socket.io-client:** Gestión de la conexión persistente con el BFF para actualizaciones "push".
+
+- **CSS Modules:** Estilo encapsulado por componente para evitar fugas de estilos y colisiones.
+
+- **Axios:** Cliente HTTP configurado con interceptores para la comunicación con el API Gateway (BFF).
+
+### Características Técnicas
+
+- **Arquitectura Basada en Hooks:** Se implementó un hook personalizado useSocket y un SocketProvider (Context API) para centralizar la conexión. Esto garantiza que cualquier componente de la aplicación pueda reaccionar a eventos del servidor sin duplicar conexiones.
+
+- **Gestión de Estados Reactiva:** La tabla de documentos no requiere recarga manual. Al recibir un evento document_processed vía Socket, el estado local se actualiza mediante un mapeo inmutable, transformando visualmente la fila de "Recibido" (Azul) a "Procesado" (Verde) al instante.
+
+- **Feedback de Usuario (UX):** - Limpieza automática de formularios mediante useRef tras cargas exitosas.
+
+  - Sistema de notificaciones temporales (`setTimeout`) para confirmaciones de carga y errores de validación.
+
+  - Botones de acción contextuales que cambian según el estado del documento (Procesar vs. Ver Detalles).
+
+### Flujo de Datos en el Cliente
+
+- **Suscripción:** Al montar el componente DocumentTable, el cliente se suscribe al namespace de notificaciones del BFF.
+
+- **Mutación Local:** Cuando se realiza un upload, la UI añade preventivamente el registro con el UUID retornado por el Core.
+
+- **Sincronización Asíncrona:** Una vez que el motor de Python termina el análisis, el componente recibe el payload de actualización y actualiza únicamente la celda de estado.
+
+### Scripts de Desarrollo
+
+Desde la carpeta `frontend-react/`:
+
+```bash
+# Instalar dependencias
+npm install
+
+# Levantar entorno de desarrollo (Vite)
+npm run dev
+
+# Construir para producción (Genera carpeta /dist)
+npm run build
+```
+
 ##  Guía de Inicio Rápido (Local)
 
 Siga estos pasos para levantar el ecosistema completo en su máquina local utilizando Docker. El sistema configurará automáticamente las redes internas y volúmenes de persistencia.
@@ -371,32 +420,59 @@ compliance-processor-oci/
 │   │   │   └── pagination.types.ts # Interfaces y tipos compartidos
 │   │   ├── index.ts  # Punto de entrada de la aplicación y configuración del servidor Express
 │   ├── .env/         # Variables de entorno específicas para el entorno de ejecución Node.js
-│   ├── Dockerfile     # Definición de la imagen base y pasos de despliegue para el BFF
+│   ├── Dockerfile    # Definición de la imagen base y pasos de despliegue para el BFF
 │   ├── package.json  # Manifiesto de dependencias y scripts de ejecución de Node.js
 │   ├── tsconfig.json # Reglas de compilación y configuración de tipos de TypeScript
 ├── frontend-react/
-│   ├── public/
-│   ├── src/
+│   ├── public/       # Activos estáticos accesibles directamente por el navegador
+│   ├── src/ 
 │   │   ├── api/
-│   │   │   └── axios.config.ts
-│   │   │   └── documentApi.ts
-│   │   ├── assets/
+│   │   │   └── axios.config.ts  # Configuración base de Axios e interceptores de peticiones
+│   │   │   └── documentApi.ts   # Definición de servicios para interactuar con los endpoints 
+│   │   ├── assets/              # Recursos multimedia (imágenes, iconos, fuentes)
 │   │   ├── components/
-│   │   │   ├──UploadBox
+│   │   │   ├──DocumentTable      # Tabla reactiva con actualización de estados vía Sockets
+│   │   │   ├  └── DocumentTable.module.css
+│   │   │   ├  └── DocumentTable.tsx
+│   │   │   ├──NavBar             # Navegación superior y branding de la plataforma
+│   │   │   ├  └── NavBar.module.css
+│   │   │   ├  └── UploadBox.tsx
+│   │   │   ├──UploadBox          # Zona de carga con validaciones y manejo de UI (refs/timers)
 │   │   │   ├  └── UploadBox.module.css
 │   │   │   ├  └── UploadBox.tsx
 │   │   ├── context/
-│   │   │   └── SocketContext.tsx
+│   │   │   └── SocketContext.tsx # Proveedor global para la instancia de Socket.io 
 │   │   ├── hook/
-│   │   │   └── useSocket.tsx
+│   │   │   └── useSocket.tsx # Hook personalizado para suscripción a eventos en tiempo real
 │   │   ├── type/
-│   │   │   └── document.tsx
-│   │   │   └── socket.tsx
-│   ├── App.css
-│   ├── App.tsx
-│   ├── index.tsx
-│   ├── main.tsx
+│   │   │   └── document.ts      # Interfaces de TypeScript para el dominio de Documentos
+│   │   │   └── socket.ts        # Tipado de eventos y payloads de comunicación en tiempo real
+│   │   ├── App.css              # Estilos globales y variables de diseño (tokens)
+│   │   ├── App.tsx              # Componente raíz y orquestador de la disposición (layout)
+│   │   ├── index.tsx
+│   │   ├── main.tsx             # Punto de entrada de React y configuración del DOM virtual
+│   ├── .env
 ├── .env              # Variables de entorno globales para la orquestación del proyecto
 ├── .gitignore        # Exclusión de archivos para el control de versiones de Git
 ├── docker-compose.yml  # Orquestación de contenedores (BFF, Core, DBs y Storage)
 ```    
+
+## Próximos Pasos (Planificación Incremental)
+
+- **Seguridad End-to-End:** Implementar autenticación JWT para proteger las rutas del BFF y persistir la sesión en el Frontend.
+
+- **Gestión de Usuarios:** Creación de pantalla de registro e inicio de sesión utilizando `react-hook-form`y validaciones de esquema con `Zod`.
+
+- **Paginación Real (Full-Stack):** Aunque el API Core ya soporta los parámetros `skip` y `limit`, falta implementar los controles de navegación (Siguiente/Anterior) en la UI para optimizar la carga de grandes volúmenes de datos.
+
+- **Optimización de Reactividad:** Sincronización automática de la `DocumentTable` inmediatamente después del evento de carga (Upload), eliminando la necesidad de refresco manual.
+
+- **Feedback Enriquecido:** Implementación de mensajes más explícitos desde el BFF al Frontend (Toast notifications) para reportar estados de validación detallados.
+
+- **Interoperabilidad Legacy:** Integración de servicios externos mediante **Flask** y **SOAP** para validaciones de cumplimiento de terceros.
+
+- **Calidad de Código y Documentación:** - Cobertura de pruebas unitarias para la integración entre el BFF y React.
+
+  - Inclusión de `docstrings` bajo el estándar Google/Numpy en todos los módulos de Python y Node.js para facilitar el mantenimiento.
+
+- **Integridad de Datos:** Implementación de hashing SHA-256 para la detección de documentos duplicados antes del almacenamiento en MinIO.
