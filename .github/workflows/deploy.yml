@@ -2,7 +2,7 @@ name: CI - Service Validation
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature/ci-setup ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -16,16 +16,16 @@ jobs:
   test-and-lint:
     runs-on: ubuntu-latest
     
-    # Definimos las variables de entorno para que los contenedores las usen
+    # Variables globales para que Docker Compose las inyecte a los contenedores
     env:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      STORAGE_ENDPOINT: http://localhost:9000
       STORAGE_ROOT_USER: ${{ secrets.STORAGE_ROOT_USER }}
       STORAGE_ROOT_PASSWORD: ${{ secrets.STORAGE_ROOT_PASSWORD }}
       MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      # Dentro de la red de Docker, usamos los nombres de los servicios
       DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db-relational:5432/${{ secrets.POSTGRES_DB }}
       MONGO_URL: mongodb://${{ secrets.MONGO_INITDB_ROOT_USERNAME }}:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@mongodb:27017
 
@@ -40,34 +40,24 @@ jobs:
 
       - name: Set up Infrastructure (Docker Compose)
         run: |
-          # Levantamos solo lo necesario para los tests del processor
-          docker compose up -d db-relational mongodb minio
-          # Damos tiempo a que levanten las bases de datos
-          sleep 15
+          
+          docker compose up -d
+          
+          
+          sleep 40         
+          
+          docker ps
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          pip install -r service-doc-proc/requirements.txt
-          pip install pytest httpx flake8
-
-      - name: Run Linter (Style Check)
+      - name: Run Linter (Inside Docker)
         run: |          
-          flake8 service-doc-proc --count --select=E9,F63,F7,F82 --show-source --statistics
+          docker compose exec -T document-processor flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      - name: Run Integration Tests
-        env:
-          # Estas URLs deben apuntar a localhost porque el runner de GH 
-          # accede a los puertos mapeados por Docker Compose
-          DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/${{ secrets.POSTGRES_DB }}
-          MONGO_URL: mongodb://${{ secrets.MONGO_INITDB_ROOT_USERNAME }}:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@localhost:27017
+      - name: Run Integration Tests (Inside Docker)
+        env:          
+          DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db-relational:5432/${{ secrets.POSTGRES_DB }}
+          MONGO_URL: mongodb://${{ secrets.MONGO_INITDB_ROOT_USERNAME }}:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@mongodb:27017
+          STORAGE_ENDPOINT: http://minio:9000
           API_KEY_SECRET: ${{ secrets.API_KEY_SECRET }}
           ENV: test
-        run: |
-          cd service-doc-proc
-          pytest -v
+        run: |          
+          docker compose exec -T document-processor pytest -v
