@@ -25,10 +25,17 @@ jobs:
       STORAGE_ROOT_PASSWORD: ${{ secrets.STORAGE_ROOT_PASSWORD }}
       MONGO_INITDB_ROOT_USERNAME: ${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
       MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+      DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db-relational:5432/${{ secrets.POSTGRES_DB }}
+      MONGO_URL: mongodb://${{ secrets.MONGO_INITDB_ROOT_USERNAME }}:${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}@mongodb:27017
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Create dummy env files
+        run: |
+            touch .env
+            mkdir -p bff-node && touch bff-node/.env
 
       - name: Set up Infrastructure (Docker Compose)
         run: |
