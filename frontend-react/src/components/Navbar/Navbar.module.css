@@ -1,0 +1,45 @@
+.navbar {
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #333;
+  padding: 0.8rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #646cff;
+}
+
+.menu {
+  display: flex;
+  gap: 20px;
+}
+
+.link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.link:hover {
+  color: #646cff;
+}
+
+/* Responsividad simple */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  .menu {
+    margin-top: 10px;
+    gap: 15px;
+  }
+}
