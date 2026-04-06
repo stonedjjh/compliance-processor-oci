@@ -36,7 +36,21 @@ jobs:
 
       - name: Set up Infrastructure (Docker Compose)
         run: |
-          # Levantamos pero sin que el healthcheck detenga el pipeline inmediatamente
+          # Creamos el archivo .env dinámicamente para que Docker Compose lo lea
+          cat << EOF > .env
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          STORAGE_ROOT_USER=${{ secrets.STORAGE_ROOT_USER }}
+          STORAGE_ROOT_PASSWORD=${{ secrets.STORAGE_ROOT_PASSWORD }}
+          STORAGE_PORT=9000
+          STORAGE_HOST=http://minio
+          MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}
+          MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+          MONGO_PORT=27017
+          MONGO_HOST=mongodb
+          MONGO_DB_NAME=audit_db
+          EOF
           docker compose up -d || true
           
           echo "Esperando 30 segundos para capturar logs de error..."
