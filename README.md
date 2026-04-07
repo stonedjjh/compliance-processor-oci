@@ -478,4 +478,4 @@ compliance-processor-oci/
 - **Integridad de Datos:** Implementación de hashing SHA-256 para la detección de documentos duplicados antes del almacenamiento en MinIO.
 
 > [!NOTE]
-> Actualmente existe una rama activa (refactor/clean-architecture-routing) donde se está implementando una arquitectura de rutas más escalable y segregación de vistas, como parte de mi proceso de mejora continua post-entrega.
+> Actualmente existe una rama activa (refactor/refactor-frontend) donde se está implementando una arquitectura de rutas más escalable y segregación de vistas, como parte de mi proceso de mejora continua post-entrega.
