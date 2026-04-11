@@ -2,6 +2,11 @@ services:
   db-relational:
     image: postgres:18-alpine
     container_name: postgres_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
     networks:
       - backend-network
@@ -19,6 +24,11 @@ services:
   mongodb:
     image: mongo:latest
     container_name: mongodb
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
     networks:
       - backend-network
@@ -35,9 +45,9 @@ services:
   minio:
     image: minio/minio:latest
     container_name: minio_storage
-    #ports:
+    ports:
     #  - "${STORAGE_PORT}:${STORAGE_PORT}"  
-    #  - "9001:9001"                        
+      - "9001:9001"                        
     networks:
       - backend-network
     environment:
@@ -52,9 +62,12 @@ services:
     build: ./service-doc-proc
     container_name: doc_processor_app
     depends_on:
-      - db-relational
-      - mongodb
-      - minio
+      db-relational:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      minio:
+        condition: service_started
     networks:
       - backend-network      
     #ports:

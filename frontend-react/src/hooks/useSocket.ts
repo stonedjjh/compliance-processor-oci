@@ -1,27 +1,30 @@
-import { useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect, useState } from "react";
+import { io, Socket } from "socket.io-client";
 
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [online, setOnline] = useState(false);
 
   useEffect(() => {
-    // Usamos la URL directa para descartar problemas de .env por ahora
-    const socketInstance = io('http://localhost:4000/notifications', {
-      transports: ['websocket'],
+    
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000";
+    const socketInstance = io(`${socketUrl}/notifications`, {
+      transports: ["websocket"],
+      autoConnect: true,
     });
 
-    socketInstance.on('connect', () => {
-      console.log('Connected to BFF');
+    socketInstance.on("connect", () => {
       setOnline(true);
     });
 
-    socketInstance.on('disconnect', () => setOnline(false));
+    socketInstance.on("disconnect", () => setOnline(false));
 
     setSocket(socketInstance);
 
     return () => {
-      socketInstance.disconnect();
+      if (socketInstance) {
+        socketInstance.disconnect();
+      }
     };
   }, []);
 

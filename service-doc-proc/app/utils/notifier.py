@@ -6,9 +6,9 @@ import logging
 BFF_URL = os.getenv("BFF_INTERNAL_URL", "http://bff_node_app:4000")
 
 
-async def notify_document_processed(document_id: str, status: str, message: str):
+async def notify_document_processed(document_id: str, status: str, message: str, filename: str = "Nuevo Archivo"):
     url = f"{BFF_URL}/api/v1/webhooks/processing-complete"
-    payload = {"documentId": document_id, "status": status, "message": message}
+    payload = {"documentId": document_id, "status": status, "message": message, "filename":filename}
 
     async with httpx.AsyncClient() as client:
         try:

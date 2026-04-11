@@ -1,39 +1,44 @@
-import React, { createContext, useEffect, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import React, { createContext, useEffect, useState } from "react";
+import { io, Socket } from "socket.io-client";
 
 interface SocketContextProps {
   socket: Socket | null;
   isConnected: boolean;
 }
 
-export const SocketContext =  createContext<SocketContextProps>({
+export const SocketContext = createContext<SocketContextProps>({
   socket: null,
   isConnected: false,
 });
 
-export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Nos conectamos al namespace que definiste en el BFF
-    const newSocket = io('http://localhost:4000/notifications', {
-      transports: ['websocket'],
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000";
+    const newSocket = io(`${socketUrl}/notifications`, {
+      transports: ["websocket"],
+      autoConnect: true,
+      reconnection: true, // Para que intente reconectar si cae el wifi de la oficina
     });
 
-    newSocket.on('connect', () => {
-      console.log('Conectado al servidor de notificaciones');
+    newSocket.on("connect", () => {
       setIsConnected(true);
     });
 
-    newSocket.on('disconnect', () => {
+    newSocket.on("disconnect", () => {
       setIsConnected(false);
     });
 
     setSocket(newSocket);
 
     return () => {
-      newSocket.close();
+      if (newSocket) {
+        newSocket.disconnect();
+      }
     };
   }, []);
 
@@ -43,4 +48,3 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     </SocketContext.Provider>
   );
 };
-

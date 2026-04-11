@@ -21,3 +21,42 @@
     color: white;
   }
 }
+
+/* DocumentTable.module.css o UploadBox.module.css */
+
+.status_container {
+  /* Reservamos el espacio exacto que ocuparía el texto */
+  min-height: 24px; 
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.status_message {
+  margin: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.visible {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.hidden {
+  opacity: 0;
+  transform: translateY(-5px); /* Pequeño efecto de deslizamiento */
+  visibility: hidden;
+}
+
+.error {
+  color: #dc3545;
+}
+
+.success {
+  color: #28a745;
+}

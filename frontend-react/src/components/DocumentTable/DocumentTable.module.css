@@ -8,12 +8,12 @@
 }
 
 .table_header {
+  height: 60px; /* Altura fija para el header */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #f3f4f6;
-  padding-bottom: 1rem;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid #eee;
 }
 
 .count {
@@ -25,14 +25,60 @@
   font-weight: 600;
 }
 
+/* Contenedor con scroll y altura consistente */
 .table_wrapper {
-  overflow-x: auto;
+  width: 100%;
+  /* Si seleccionan 10, la tabla medirá aprox 550px. 
+     Reservamos ese espacio siempre para que no salte.
+  */
+  min-height: 550px; 
+  max-height: 550px; /* Evita que crezca infinitamente */
+  overflow-y: auto;  /* Scroll si hay más contenido del que cabe */
+  position: relative;
+  background-color: #fff;
 }
 
+/* Para que la tabla ocupe todo el ancho pero respete el scroll */
 .modern_table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  table-layout: fixed; /* CLAVE: Fuerza a respetar los anchos de columna */
+}
+
+.col_documento {
+  width: 45%;
+}
+
+/* Columna de Estado */
+.col_estado {
+  width: 20%;
+}
+
+/* Columna de Fecha */
+.col_fecha {
+  width: 20%;
+}
+
+/* Columna de Acciones */
+.col_acciones {
+  width: 15%;
+}
+
+.filename_wrapper {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* El "Tooltip" nativo usando el atributo title */
+.filename_cell {
+  position: relative;
+}
+
+.filename_cell strong {
+  cursor: help; /* Indica al usuario que hay más info */
 }
 
 .modern_table th {
@@ -81,3 +127,100 @@
 /* Estados en Inglés (Uppercase por si acaso) */
 .processed { background: #dcfce7; color: #166534; }
 .failed { background: #fee2e2; color: #991b1b; }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  padding: 20px;
+  gap: 5px;
+}
+
+.page_item {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.page_item:hover {
+  background-color: #f0f0f0;
+}
+
+.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.table_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+}
+
+.page_selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.page_selector select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #ffffff;
+  color: #333333; /* Forzamos color oscuro para que sea legible */
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.page_selector select:focus {
+  border-color: #007bff;
+}
+
+.pagination_wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* Clases para ReactPaginate */
+.pagination {
+  display: flex;
+  list-style: none;
+  gap: 5px;
+}
+
+.page_item {
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.page_item:hover {
+  background-color: #f5f5f5;
+}
+
+.active {
+  background-color: #007bff !important;
+  color: white !important;
+  border-color: #007bff;
+}
+
+.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

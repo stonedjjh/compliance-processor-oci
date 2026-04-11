@@ -24,6 +24,8 @@ from fastapi import Security
 from fastapi.security.api_key import APIKeyHeader
 from app.utils.notifier import notify_document_processed
 
+from sqlalchemy import desc
+
 API_KEY_NAME = "X-API-KEY"
 API_KEY_SECRET = os.getenv("API_KEY_SECRET", "mi_clave_secreta_super_segura_123")
 
@@ -98,7 +100,7 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     file_id = str(uuid.uuid4())
 
     content = await file.read()
-    validate_file_upload(content, filename, allowed_extensions=[".pdf", ".docx"])
+    validate_file_upload(content, filename, allowed_extensions=[".txt"])
 
     try:
         storage = StorageManager()
@@ -131,6 +133,13 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
                 "document_id": file_id,
                 "details": {"filename": filename, "status": "SUCCESS"},
             }
+        )
+
+        await notify_document_processed(
+            document_id=str(file_id),
+            status="Recibido",
+            message="Archivo Guardado",
+            filename=original_filename
         )
 
     except Exception as e:
@@ -173,9 +182,8 @@ async def get_documents(
     limit: schemas.PageLimit = schemas.PageLimit.MEDIUM,
     db: Session = Depends(database.get_db),
 ):
-
     try:
-        return db.query(models.Document).offset(skip).limit(limit.value).all()
+        return db.query(models.Document).order_by(desc(models.Document.created_at)).offset(skip).limit(limit.value).all()
     except Exception as e:
         print(f"Error al obtener documentos: {e}")
         raise HTTPException(

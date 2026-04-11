@@ -1,0 +1,29 @@
+.divContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  gap: 2rem;
+}
+
+.link {
+  margin-top: 1rem;
+  text-decoration: none;
+  color: #1976d2;
+  font-weight: bold;
+}
+
+.title {
+  font-size: 6rem;
+  margin: 0 10px;
+}
+
+.redColor {
+  color: red;
+}
+
+.subtitle {
+  margin-top: 1rem;
+}

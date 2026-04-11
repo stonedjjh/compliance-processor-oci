@@ -384,6 +384,20 @@ Si desea flexibilizar o restringir aún más los tipos de archivos permitidos, p
 > [!NOTE]
 > Cualquier archivo que no cumpla con esta lista blanca devolverá un código **400 Bad Request**, protegiendo el almacenamiento de objetos de datos no procesables.
 
+## Infraestructura y Almacenamiento (OCI Design)
+
+Para la gestión de archivos a escala profesional, se ha definido la integración con OCI Object Storage. Esta configuración permite desacoplar el almacenamiento físico del ciclo de vida de los contenedores, garantizando la persistencia de los datos independientemente del estado de los servicios.
+
+Bucket de Cumplimiento: Diseñado para el almacenamiento de documentos procesados con políticas de retención activa y redundancia regional.
+
+Seguridad IAM: Implementación lógica de políticas de compartimento y grupos dinámicos para permitir el acceso a los recursos mediante el SDK de Oracle sin necesidad de exponer credenciales físicas en el código fuente.
+
+> [!NOTE]
+> Documentación de Infraestructura:
+> Se ha generado un manual detallado que cubre la creación del bucket, la gestión de niveles de almacenamiento (Standard/Archive) y la configuración de políticas de seguridad en el siguiente enlace:
+
+[Manual de Configuración de Buckets e IAM en OCI](./Guía-storage-OCI.md)
+
 ## Estructura del Proyecto
 
 ```text
