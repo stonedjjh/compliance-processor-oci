@@ -16,5 +16,11 @@ class DocumentOut(BaseModel):
     status: str
     storage_path: str | None = None
     content_type: str | None = None
-    created_at: datetime     
+    created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class DocumentMetadata(BaseModel):
+    filename: str
+    content_type: str
+    file_content: bytes

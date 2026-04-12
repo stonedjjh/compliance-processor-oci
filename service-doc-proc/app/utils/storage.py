@@ -9,6 +9,7 @@ import boto3
 from botocore.client import Config
 from app.internal.config import settings
 from botocore.exceptions import ClientError
+from ..schemas import DocumentMetadata
 
 
 class StorageManager:
@@ -38,15 +39,15 @@ class StorageManager:
             else:
                 print(f"ERROR crítico al verificar bucket: {e}")
 
-    def upload_file(self, file_content: bytes, object_name: str, content_type: str):
+    def upload_file(self, metadata: DocumentMetadata) -> str:
         """Sube el archivo a MinIO y devuelve la ruta lógica."""
         self.s3.put_object(
             Bucket=self.bucket,
-            Key=object_name,
-            Body=file_content,
-            ContentType=content_type,
+            Key=metadata.filename,
+            Body=metadata.file_content,
+            ContentType=metadata.content_type,
         )
-        return f"{self.bucket}/{object_name}"
+        return f"{self.bucket}/{metadata.filename}"
 
     def check_health(self) -> bool:
         try:
