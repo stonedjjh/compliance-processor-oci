@@ -44,8 +44,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api/v1/documents", documentRoutes);
 
 const notificationNamespace = io.of("/notifications");
-notificationNamespace.on("connection", (socket) => {
-  console.log("Cliente conectado al canal de notificaciones");
+notificationNamespace.on("connection", (socket) => {  
 });
 
 app.use((req: any, res, next) => {
@@ -78,8 +77,7 @@ app.post(
       filename,
       timestamp: new Date(),
     });
-
-    console.log(`Webhook recibido: Documento ${documentId} ${status}`);
+    
     res.status(200).json({ received: true });
   },
 );
