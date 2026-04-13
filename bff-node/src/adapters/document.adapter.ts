@@ -49,9 +49,9 @@ export class DocumentAdapter {
     }
   };
 
-  getDocuments = async (page: number = 1, limit: PaginationLimit = 10) => {
-   try {    
-    const skip = (page - 1) * limit;
+  getDocuments = async (page: number = 0, limit: PaginationLimit = 10) => {
+   try {
+    const skip = (page) * limit;
     const params: PaginationParams = {
       skip: skip,  
       limit: limit
@@ -94,7 +94,7 @@ export class DocumentAdapter {
       return response.data;
     } catch (error: any) {
       console.error(`Error disparando proceso para ${id}:`, error.response?.data || error.message);
-      throw new Error('No se pudo iniciar el procesamiento del documento');
+      throw new Error(`No se pudo iniciar el procesamiento del documento ${error.response?.data || error.message}`);
     }
   };
 

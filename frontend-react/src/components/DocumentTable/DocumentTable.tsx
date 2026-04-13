@@ -8,6 +8,7 @@ import ReactPaginateModule from "react-paginate";
 export const DocumentTable = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalDocuments, setTotalDocuments] = useState(0);
   const { socket } = useSocket();
 
   // PAGINACIÓN: Estados necesarios
@@ -19,28 +20,27 @@ export const DocumentTable = () => {
 
   const loadData = useCallback(async () => {
     try {
-      const { data } = await documentApi.getDocuments();
-      const docsArray = Array.isArray(data) ? data : data.documents || [];
-      setDocuments(docsArray);
+      const { data } = await documentApi.getDocuments(currentPage, itemsPerPage);
+      setTotalDocuments(data.total || data.data?.length || 0);
+      const docsArray = Array.isArray(data.data) ? data.data : data.documents || [];      
+      setDocuments(docsArray);      
     } catch (err) {
       console.error("Error fetching docs", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
-  // Lógica de filtrado de datos para la vista
-  const offset = currentPage * itemsPerPage;
-  const currentItems = documents.slice(offset, offset + itemsPerPage);
-  const pageCount = Math.ceil(documents.length / itemsPerPage);
+  // Lógica de filtrado de datos para la vista  
+  const pageCount = Math.ceil(totalDocuments / itemsPerPage);
 
   const handlePageClick = (selectedItem: { selected: number }) => {
-    setCurrentPage(selectedItem.selected);
+    setCurrentPage(selectedItem.selected);    
   };
 
   const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setItemsPerPage(Number(e.target.value));
-    setCurrentPage(0); // Reiniciar a la página 1 al cambiar el tamaño
+    setItemsPerPage(Number(e.target.value));    
+    setCurrentPage(0);
   };
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export const DocumentTable = () => {
       <header className={styles.table_header}>
         <div className={styles.header_left}>
           <h3>Monitor de Cumplimiento</h3>
-          <span className={styles.count}>{documents.length} Archivos</span>
+          <span className={styles.count}>{totalDocuments} Archivos</span>
         </div>
 
         <div className={styles.page_selector}>
@@ -141,7 +141,7 @@ export const DocumentTable = () => {
                 </td>
               </tr>
             ) : (
-              currentItems.map((doc) => (
+              documents.map((doc) => (
                 <tr key={`doc-id-${doc.id}`} style={{ height: "55px" }}>
                   <td
                     className={`${styles.filename_cell} ${styles.filename_wrapper}`}

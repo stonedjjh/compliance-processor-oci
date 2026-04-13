@@ -3,16 +3,16 @@ Document API Router
 """
 
 import uuid
-from fastapi import APIRouter, File, UploadFile, Depends, Security, status
+from fastapi import APIRouter, File, UploadFile, Depends, Security, status, Response
 from sqlalchemy.orm import Session
 from app.api.v1.controllers import documents_controller
 from app.internal.database import get_db
 from app.internal.auth import get_api_key
 from app import schemas
 from app.internal import database
+from typing import Union
 
-
-router = APIRouter(prefix="/documents", tags=["documents"])
+router = APIRouter(prefix="/documents", tags=["documents"], redirect_slashes=False)
 
 
 @router.post("/upload", status_code=201, dependencies=[Security(get_api_key)])
@@ -21,8 +21,8 @@ async def upload(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/",
-    response_model=list[schemas.DocumentOut],
+    "",
+    response_model=schemas.DocumentPagination,
     status_code=status.HTTP_200_OK,
     dependencies=[Security(get_api_key)],
 )
@@ -36,11 +36,13 @@ async def list_docs(
 
 @router.post(
     "/{id}/process",
-    response_model=schemas.DocumentOut,
+    response_model=Union[schemas.DocumentOut, schemas.ProcessMessage],
     status_code=status.HTTP_200_OK,
     dependencies=[Security(get_api_key)],
 )
-async def process_document(id: uuid.UUID, db: Session = Depends(database.get_db)):
+async def process_document(
+    id: uuid.UUID, response: Response, db: Session = Depends(database.get_db)
+):
     return await documents_controller.process_document(id, db)
 
 

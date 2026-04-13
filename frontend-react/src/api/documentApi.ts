@@ -2,7 +2,11 @@ import api from "./axios.config";
 
 export const documentApi = {
   // Listar todos los documentos para la tabla del Dashboard
-  getDocuments: () => api.get("/documents"),
+  getDocuments: (currentPage: number, itemsPerPage: number) => {
+    const page = currentPage;
+    const limit = itemsPerPage;    
+    return api.get("/documents", { params: { page, limit } });
+  },
 
   // Subir un archivo
   uploadDocument: (file: File) => {

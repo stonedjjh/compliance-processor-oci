@@ -7,7 +7,7 @@ from datetime import datetime
 class PageLimit(IntEnum):
     SMALL = 5
     MEDIUM = 10
-    LARGE = 50
+    LARGE = 20
 
 
 class DocumentOut(BaseModel):
@@ -24,3 +24,16 @@ class DocumentMetadata(BaseModel):
     filename: str
     content_type: str
     file_content: bytes
+
+
+class DocumentPagination(BaseModel):
+    total: int
+    skip: int
+    limit: int
+    data: list[DocumentOut]
+
+
+class ProcessMessage(BaseModel):
+    status: str
+    message: str
+    file_id: UUID

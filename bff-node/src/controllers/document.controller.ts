@@ -36,11 +36,11 @@ export const uploadDocument = async (req: Request, res: Response) => {
 
 export const getAllDocuments = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
+    const page = parseInt(req.query.page as string) || 0;
     const limitInput = parseInt(req.query.limit as string) || 10;
 
     let limit: PaginationLimit = 10;
-    if ([5, 10, 50].includes(limitInput)) {
+    if ([5, 10, 20].includes(limitInput)) {
       limit = limitInput as PaginationLimit;
     }
 

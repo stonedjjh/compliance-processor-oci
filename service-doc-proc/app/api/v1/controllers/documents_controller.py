@@ -8,8 +8,7 @@ from sqlalchemy.orm import Session
 from app import schemas
 from .mongo_controller import mongodb_add_register
 from .storage_controller import storage_upload
-from .db_relationals_controller import db_create_document
-from sqlalchemy import desc
+from .db_relationals_controller import db_create_document, db_get_documents
 from app.internal import models, database
 from app.utils.validators import validate_file_upload
 from app.utils.notifier import DocumentLog, notify_document_processed
@@ -79,7 +78,6 @@ async def handle_upload(file: UploadFile, db: Session):
         }
 
     except Exception as e:
-        db.rollback()
         await mongodb_add_register(
             {
                 "event_type": "DOCUMENT_UPLOAD_FAILED",
@@ -97,13 +95,7 @@ async def get_documents(
 ):
 
     try:
-        return (
-            db.query(models.Document)
-            .order_by(desc(models.Document.created_at))
-            .offset(skip)
-            .limit(limit.value)
-            .all()
-        )
+        return db_get_documents(skip, limit, db)
     except Exception as e:
         print(f"Error al obtener documentos: {e}")
         raise HTTPException(
@@ -125,12 +117,8 @@ async def get_by_id(id: uuid.UUID, db: Session):
 
 
 async def process_document(id: uuid.UUID, db: Session):
-    db_document = db.query(models.Document).filter(models.Document.id == id).first()
-
-    if not db_document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Documento no encontrado"
-        )
+    # db_document = db.query(models.Document).filter(models.Document.id == id).first()
+    db_document = await get_by_id(id, db)
 
     if db_document.status == "PROCESSED":
         return {
@@ -139,6 +127,7 @@ async def process_document(id: uuid.UUID, db: Session):
             "file_id": id,
         }
 
+    print("Intento guardar en mogodb")
     try:
         db_document.status = "PROCESSED"
         db.commit()
