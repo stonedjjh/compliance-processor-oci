@@ -404,6 +404,10 @@ Seguridad IAM: Implementación lógica de políticas de compartimento y grupos d
 compliance-processor-oci/
 ├── service-doc-proc/
 │   ├── app/
+│   │   ├── api/
+│   │   │   └── v1/ 
+│   │   │   |   └── controllers/ 
+│   │   │   |   └── routers/ 
 │   │   ├── internal/
 │   │   │   └── config.py     # Gestión de variables de entorno y configuración centralizada 
 │   │   │   └── database.py   # SQLAlchemy, Sesiones y Health Check SQL
@@ -490,6 +494,3 @@ compliance-processor-oci/
   - Inclusión de `docstrings` bajo el estándar Google/Numpy en todos los módulos de Python y Node.js para facilitar el mantenimiento.
 
 - **Integridad de Datos:** Implementación de hashing SHA-256 para la detección de documentos duplicados antes del almacenamiento en MinIO.
-
-> [!NOTE]
-> Actualmente existe una rama activa (refactor/refactor-frontend) donde se está implementando una arquitectura de rutas más escalable y segregación de vistas, como parte de mi proceso de mejora continua post-entrega.
