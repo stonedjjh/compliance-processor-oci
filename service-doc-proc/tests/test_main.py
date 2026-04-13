@@ -36,11 +36,11 @@ def test_health_check():
 def test_upload_file():
     # Simulamos un PDF real
     file_content = b"%PDF-1.4 prueba de contenido"
-    file_name = "documento_importante.pdf"
+    file_name = "documento_importante.txt"
 
     response = client.post(
         "/api/v1/documents/upload",
-        files={"file": (file_name, file_content, "application/pdf")},
+        files={"file": (file_name, file_content, "application/txt")},
         headers=HEADERS,
     )
 
@@ -54,11 +54,11 @@ def test_upload_file():
 def test_upload_and_get_document_strict():
     # 1. Subimos un archivo con un nombre único
     file_content = b"%PDF-1.4 contenido real"
-    file_name = "mi_documento_corporativo.pdf"
+    file_name = "mi_documento_corporativo.txt"
 
     response_upload = client.post(
         "/api/v1/documents/upload",
-        files={"file": (file_name, file_content, "application/pdf")},
+        files={"file": (file_name, file_content, "application/txt")},
         headers=HEADERS,
     )
 
@@ -81,14 +81,14 @@ def test_get_documents_pagination():
     for i in range(7):
         client.post(
             "/api/v1/documents/upload",
-            files={"file": (f"test_{i}.pdf", file_content, "application/pdf")},
+            files={"file": (f"test_{i}.txt", file_content, "application/txt")},
             headers=HEADERS,
         )
 
     response = client.get("/api/v1/documents?skip=0&limit=5", headers=HEADERS)
 
     assert response.status_code == 200
-    data = response.json()
+    data = response.json().get("data")
     # Esperamos una lista de documentos, no un objeto de estatus
     assert isinstance(data, list)
     assert len(data) == 5
@@ -98,7 +98,7 @@ def test_get_documents_empty_pagination():
     # Probamos un salto mayor al número de registros
     response = client.get("/api/v1/documents?skip=100&limit=10", headers=HEADERS)
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json().get("data") == []
 
 
 def test_get_documents_invalid_limit():
@@ -111,14 +111,14 @@ def test_get_documents_invalid_limit():
     error_detail = str(response.json()["detail"])
 
     # Buscamos el mensaje estándar de Pydantic para Enums
-    assert "5, 10 or 50" in error_detail
+    assert "5, 10 or 20" in error_detail
 
 
 def test_process_document_success():
     file_content = b"%PDF-1.4 contenido"
     response_up = client.post(
         "/api/v1/documents/upload",
-        files={"file": ("test.pdf", file_content, "application/pdf")},
+        files={"file": ("test.txt", file_content, "application/txt")},
         headers=HEADERS,
     )
     doc_id = response_up.json()["id"]
@@ -137,7 +137,7 @@ def test_process_document_already_processed():
     file_content = b"%PDF-1.4 contenido"
     response_up = client.post(
         "/api/v1/documents/upload",
-        files={"file": ("test2.pdf", file_content, "application/pdf")},
+        files={"file": ("test2.txt", file_content, "application/txt")},
         headers=HEADERS,
     )
     doc_id = response_up.json()["id"]
