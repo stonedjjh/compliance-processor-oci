@@ -4,9 +4,9 @@ services:
     container_name: postgres_db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     restart: always
     networks:
       - backend-network
@@ -19,7 +19,7 @@ services:
     #ports:
     #  - "${DB_PORT}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
 
   mongodb:
     image: mongo:latest
@@ -75,6 +75,7 @@ services:
     env_file:
       - .env
     environment:
+      - PYTHONUNBUFFERED=1
       - DATABASE_URL=${DATABASE_URL}
       - MONGO_URL=${MONGO_URL}
     healthcheck:      
