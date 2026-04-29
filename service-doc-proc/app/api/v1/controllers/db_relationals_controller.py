@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from app.internal import models, database
+from app.internal import database
+from app import models
 from fastapi import HTTPException, Depends
 
 

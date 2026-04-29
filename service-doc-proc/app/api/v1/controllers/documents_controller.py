@@ -9,7 +9,8 @@ from app import schemas
 from .mongo_controller import mongodb_add_register
 from .storage_controller import storage_upload
 from .db_relationals_controller import db_create_document, db_get_documents
-from app.internal import models, database
+from app.internal import database
+from app import models
 from app.utils.validators import validate_file_upload
 from app.utils.notifier import DocumentLog, notify_document_processed
 
