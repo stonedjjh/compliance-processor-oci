@@ -1,11 +1,33 @@
 from fastapi import FastAPI
 from .api.v1.routers import documents, healthcheck
-from .internal import database, models
 
-# Inicialización de DB (esto también podría ir a un init_db si queremos ser puristas)
-models.Base.metadata.create_all(bind=database.engine)
+import logging
+from contextlib import asynccontextmanager
+import asyncio
+import subprocess
 
-app = FastAPI(title="Document Processing Service")
+
+async def run_db_migrations():
+    # Ejecuta Alembic como subproceso
+    proc = await asyncio.create_subprocess_exec(
+        "alembic", "upgrade", "head", stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    stdout, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        logging.error(f"Error al aplicar migraciones: {stderr.decode()}")
+    else:
+        logging.info(f"Migraciones aplicadas:\n{stdout.decode()}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await run_db_migrations()  # Ahora es asíncrono y no bloquea Uvicorn
+    yield
+    logging.info("Cerrando aplicación: Limpiando recursos...")
+
+
+# Inicializamos FastAPI con el manejador de lifespan
+app = FastAPI(title="Document Processing Service", lifespan=lifespan)
 
 # Registro de rutas
 app.include_router(documents.router, prefix="/api/v1")
