@@ -75,3 +75,24 @@ Se adopta una arquitectura de empaquetado distribuido para el sistema compliance
 ### Consecuencias
 * Positivas: Despliegue atómico y capacidad de rollback inmediato.
 * Negativas: Aumento en la complejidad inicial de la automatización del CI/CD.
+
+## 5. Estrategia Multi-arquitectura (x86_64 / ARM64) para OCI Ampere
+
+### Fecha
+2026-05-01
+
+### Estatus
+En revisión (Rama: feature/multi-arch-support)
+
+### Contexto
+La infraestructura de despliegue en Oracle Cloud Infrastructure (OCI) utiliza instancias Ampere basadas en arquitectura ARM64, mientras que el entorno de desarrollo y los corredores estándar de GitHub Actions operan sobre x86_64 (AMD64). Una imagen construida exclusivamente para x86_64 no es compatible con el hardware de producción.
+
+### Decisión
+Se implementa un flujo de construcción híbrido para compliance-processor utilizando Docker Buildx y QEMU:
+1. Emulación de Hardware: Configuración de QEMU en el pipeline para permitir que los corredores de GitHub emulen instrucciones ARM64.
+2. Manifiestos de Imagen: Generación de un manifiesto único que agrupa ambas arquitecturas bajo la misma etiqueta (tag).
+3. Optimización de Despliegue: Al ejecutar docker pull en la instancia de OCI, el motor detectará la arquitectura ARM64 y descargará la capa correspondiente de forma automática.
+
+### Consecuencias
+* Positivas: Compatibilidad garantizada con el hardware de alto rendimiento de OCI y paridad absoluta entre los entornos de desarrollo y producción.
+* Negativas: Incremento en los tiempos de ejecución del CI/CD debido a la sobrecarga de emulación durante el proceso de empaquetado.
