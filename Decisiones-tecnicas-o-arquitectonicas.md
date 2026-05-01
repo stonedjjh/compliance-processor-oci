@@ -53,3 +53,25 @@ Se decidió transformar `models.py` en un paquete Python (`app/models/`). Cada e
 ### Consecuencias
 * Positivas: Organización clara y cumplimiento del principio de Responsabilidad Única. Facilita la navegación del código y permite que el esquema de la base de datos crezca de forma ordenada.
 * Negativas: Requiere un paso adicional de registro en el `__init__.py` para que SQLAlchemy y Alembic reconozcan los modelos durante el autogenerate.
+
+## 4. Modelo de empaquetado basado en Registro de Contenedores (Registry-First) para compliance-processor
+
+### Fecha
+2026-05-01
+
+### Estatus
+Aceptado
+
+### Contexto
+El flujo tradicional de despliegue mediante la compilación de código fuente directamente en el servidor genera inconsistencias de entorno y consume recursos de cómputo innecesarios. Se requiere que el entorno de producción actúe exclusivamente como un ejecutor de artefactos inmutables.
+
+### Decisión
+Se adopta una arquitectura de empaquetado distribuido para el sistema compliance-processor:
+1. Desacoplamiento de Artefactos: Cada servicio (bff-node, frontend-react, service-doc-proc) tendrá su propio Dockerfile y su propia imagen independiente.
+2. Inmutabilidad: El despliegue se realizará mediante la descarga de imágenes versionadas, eliminando la directiva 'build' en producción.
+3. Estrategia de Frontend: El artefacto se empaqueta como un servidor de archivos estáticos (Nginx) para eliminar procesos de desarrollo en ejecución.
+4. Orquestación: Los servicios de infraestructura se consumen desde registros oficiales sin modificaciones.
+
+### Consecuencias
+* Positivas: Despliegue atómico y capacidad de rollback inmediato.
+* Negativas: Aumento en la complejidad inicial de la automatización del CI/CD.
