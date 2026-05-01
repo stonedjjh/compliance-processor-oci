@@ -7,68 +7,86 @@ on:
       - 'bff-node/**'
       - 'frontend-react/**'
       - 'service-doc-proc/**'
-  
   workflow_dispatch:
     inputs:
       service:
-        description: 'Selecciona el servicio a construir'
+        description: 'Servicio a construir'
         required: true
-        default: 'service-doc-proc'
         type: choice
         options:
           - bff-node
           - frontend-react
           - service-doc-proc
       tag_name:
-        description: 'Etiqueta personalizada'
+        description: 'Tag manual (ej. v1.0.0)'
         required: false
-        default: 'manual-build'
+        default: 'manual'
 
 jobs:
-  build-and-push:
+  analyze:
     runs-on: ubuntu-latest
+    outputs:
+      build_bff: ${{ steps.filter.outputs.bff == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.service == 'bff-node') }}
+      build_front: ${{ steps.filter.outputs.front == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.service == 'frontend-react') }}
+      build_proc: ${{ steps.filter.outputs.proc == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.service == 'service-doc-proc') }}
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            bff: 'bff-node/**'
+            front: 'frontend-react/**'
+            proc: 'service-doc-proc/**'
 
-    - name: Determine Metadata
-      id: meta-calc
-      run: |
-        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          # Caso Manual
-          CONTEXT="${{ github.event.inputs.service }}"
-          TAG="${{ github.event.inputs.tag_name }}"
-        else
-          # Caso Push (Ejemplo simplificado: detectamos el primer cambio relevante)
-          # En producción se suele usar una matriz, pero aquí cumplimos tu orden de 'decirle qué crear'
-          CONTEXT="service-doc-proc"
-          TAG="latest"
-        fi
+  build:
+    needs: analyze
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: bff
+            context: bff-node
+            image: compliance-bff
+            run_flag: ${{ needs.analyze.outputs.build_bff }}
+          - id: front
+            context: frontend-react
+            image: compliance-frontend
+            run_flag: ${{ needs.analyze.outputs.build_front }}
+          - id: proc
+            context: service-doc-proc
+            image: compliance-processor
+            run_flag: ${{ needs.analyze.outputs.build_proc }}
+    steps:
+      - name: Checkout repository
+        if: ${{ matrix.run_flag == 'true' }}
+        uses: actions/checkout@v4
 
-        # Mapeo lógico de nombres de imagen
-        case "$CONTEXT" in
-          "bff-node") IMAGE="compliance-bff" ;;
-          "frontend-react") IMAGE="compliance-frontend" ;;
-          "service-doc-proc") IMAGE="compliance-processor" ;;
-        esac
+      - name: Log in to Docker Hub
+        if: ${{ matrix.run_flag == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-        # Exportación profesional vía outputs
-        echo "service_context=$CONTEXT" >> $GITHUB_OUTPUT
-        echo "image_name=$IMAGE" >> $GITHUB_OUTPUT
-        echo "image_tag=$TAG" >> $GITHUB_OUTPUT
+      - name: Extract metadata
+        if: ${{ matrix.run_flag == 'true' }}
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ github.event.inputs.tag_name }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=sha,format=short,prefix=v-,enable=${{ github.event_name == 'push' }}
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        # Acceso seguro mediante el contexto de pasos
-        context: ./${{ steps.meta-calc.outputs.service_context }}
-        push: true
-        tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.meta-calc.outputs.image_name }}:latest
-          ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.meta-calc.outputs.image_name }}:${{ steps.meta-calc.outputs.image_tag }}
+      - name: Build and push
+        if: ${{ matrix.run_flag == 'true' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
