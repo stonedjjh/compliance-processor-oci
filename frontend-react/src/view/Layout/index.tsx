@@ -1,12 +1,12 @@
 import { Outlet } from "react-router";
 import { NavBar } from "../../components/Navbar/NavBar";
+import styles from "./Layout.module.css"; // Importación del estilo
 
 const Layout = () => {
   return (
     <>
       <NavBar />
-      {/* crear modulo y agregar estilo */}
-      <main className="content-container">
+      <main className={styles["content-container"]}>
         <Outlet />
       </main>
     </>
