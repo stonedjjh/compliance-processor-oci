@@ -23,16 +23,16 @@ const Register = () => {
     <h2>Crear Cuenta</h2>
     
     <input {...register('fullName')} placeholder="Nombre Completo" />
-    <p>{errors.fullName?.message}</p>
+    <p className={styles.errorText}>{errors.fullName?.message}</p>
 
     <input {...register('email')} placeholder="Correo Electrónico" />
-    <p>{errors.email?.message}</p>
+    <p className={styles.errorText}>{errors.email?.message}</p>
 
     <input type="password" {...register('password')} placeholder="Contraseña" />
-    <p>{errors.password?.message}</p>
+    <p className={styles.errorText}>{errors.password?.message}</p>
 
     <input type="password" {...register('confirmPassword')} placeholder="Confirmar Contraseña" />
-    <p>{errors.confirmPassword?.message}</p>
+    <p className={styles.errorText}>{errors.confirmPassword?.message}</p>
 
     <button type="submit">Registrar</button>
    </form>
