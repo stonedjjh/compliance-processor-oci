@@ -10,6 +10,7 @@ on:
       - 'frontend-react/**'
       - 'docker-compose.yml'
       - '.github/workflows/**'
+      - '!.github/workflows/docker-publish.yml'
   pull_request:
     branches: [ main ]
     paths:

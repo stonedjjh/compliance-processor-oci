@@ -2,7 +2,7 @@ name: Docker Publish compliance-processor
 
 on:
   push:
-    branches: ["main", "fix/cd-pipeline-test" ]
+    branches: [ "main" ]
     paths:
       - 'bff-node/**'
       - 'frontend-react/**'
