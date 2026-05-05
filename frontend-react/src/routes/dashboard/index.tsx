@@ -1,5 +1,5 @@
 
-import FormUser from "../../view/FormUser";
+import RegisterView from "../../view/RegisterView";
 import Layout from "../../view/Layout";
 import ManagementDocument from "../../view/ManagementDocument";
 
@@ -14,7 +14,7 @@ const routerDashboard = [
       },
       {
         path: "register",
-        element: <FormUser />,
+        element: <RegisterView />,
       },
     ],
   },
