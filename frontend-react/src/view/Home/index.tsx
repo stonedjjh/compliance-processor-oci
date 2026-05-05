@@ -32,7 +32,7 @@ const Home = () => {
       </div>
 
       <footer className={styles.footer}>
-        <p>Estado de la infraestructura: Operacional | Arquitectura: ARM64/x86_64 | v1.0.1-deploy-test</p>
+        <p>Estado de la infraestructura: Operacional | Arquitectura: ARM64/x86_64 | v1.0.4-deploy-test</p>
       </footer>
     </section>
   );

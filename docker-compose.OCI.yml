@@ -1,0 +1,125 @@
+services:
+  db-relational:
+    image: postgres:18-alpine
+    container_name: postgres_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: always
+    networks:
+      - backend-network
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - backend-network
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio_storage
+    ports:
+      - "9001:9001"
+    networks:
+      - backend-network
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${STORAGE_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: always
+
+  document-processor:
+    image: danieljimenez982/compliance-processor:latest
+    container_name: doc_processor_app
+    depends_on:
+      db-relational:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - backend-network
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=${DATABASE_URL}
+      - MONGO_URL=${MONGO_URL}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: always
+
+  bff-node:
+    image: danieljimenez982/compliance-bff:latest
+    container_name: bff_node_app
+    restart: always
+    depends_on:
+      document-processor:
+        condition: service_healthy
+    networks:
+      - frontend-network
+      - backend-network
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      - DOCUMENT_PROCESSOR_URL=http://document-processor:8000
+      - PORT=4000
+
+  frontend-react:
+    image: danieljimenez982/compliance-frontend:latest
+    container_name: compliance_frontend
+    restart: always
+    ports:
+      - "5173:80"
+    networks:
+      - frontend-network
+    env_file:
+      - .env
+
+networks:
+  backend-network:
+    name: backend-network
+    driver: bridge
+  frontend-network:
+    name: frontend-network
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: postgres_data
+  mongo_data:
+    name: mongo_data
+  minio_data:
+    name: minio_data

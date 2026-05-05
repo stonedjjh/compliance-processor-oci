@@ -494,3 +494,47 @@ compliance-processor-oci/
   - Inclusión de `docstrings` bajo el estándar Google/Numpy en todos los módulos de Python y Node.js para facilitar el mantenimiento.
 
 - **Integridad de Datos:** Implementación de hashing SHA-256 para la detección de documentos duplicados antes del almacenamiento en MinIO.
+
+
+## Actualización al 05/05/2026
+
+### Arquitectura y Evolución
+
+El sistema trasciende la programación simple para convertirse en una solución de infraestructura como código. La transición de local a la nube fue posible gracias a:
+
+- **Desacoplamiento Estructural:** La independencia entre el Frontend, BFF y Core Service permitió integrar herramientas de automatización sin reescribir la lógica de negocio.
+
+
+### Registro de Decisiones Arquitectónicas (ADR)
+
+Para mantener la trazabilidad de la evolución del sistema, contamos con un documento de Decisiones técnicas o arquitectónicas. Este registro justifica cada cambio crítico, desde la elección de los patrones de diseño hasta la estrategia de despliegue en la nube, asegurando que la arquitectura sea comprensible y mantenible a largo plazo.
+
+### Automatización y Despliegue Continuo (CD)
+
+El proyecto integra un flujo avanzado de GitHub Actions mediante el workflow `docker-publish`. Este proceso no es una simple subida de archivos; es un sistema inteligente de entrega:
+
+- **Detección por Áreas:** El workflow identifica qué microservicio ha sido modificado y dispara la construcción únicamente de la imagen afectada, optimizando los tiempos de integración.
+
+- **Construcción Multi-arquitectura:** Soporte nativo para linux/amd64 (desarrollo local) y linux/arm64 (instancias Ampere en OCI), permitiendo que el mismo código se ejecute con máxima eficiencia en diferentes procesadores.
+
+- **Despliegue Automatizado:** Una vez generada la imagen, el pipeline se encarga de actualizar los contenedores en la nube de OCI, cerrando el ciclo de vida del desarrollo sin intervención manual.
+
+### Guía de Ejecución
+
+La arquitectura permite ahora dos modalidades de arranque, diferenciando claramente el entorno de desarrollo del de producción:
+
+1. Desarrollo Local (Entorno Efímero)
+
+Ideal para colaboradores que desean modificar el código y ver cambios instantáneos mediante la construcción de imágenes en su máquina local:
+
+```Bash
+docker-compose up --build
+```
+
+2. Infraestructura OCI (Producción)
+
+Utilizado por el pipeline de CD para levantar la infraestructura validada, haciendo uso de imágenes multi-arquitectura pre-construidas en el registro:
+
+```Bash
+docker-compose -f docker-compose.oci.yml up -d
+```
