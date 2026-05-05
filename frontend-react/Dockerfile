@@ -4,6 +4,15 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+
+# Definir los argumentos que vendrán desde el exterior
+ARG VITE_API_URL
+ARG VITE_SOCKET_URL
+
+# Convertirlos en variables de entorno para que Vite los vea durante el build
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
+
 RUN npm run build
 
 # Etapa 2: Servidor de producción
