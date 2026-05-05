@@ -114,11 +114,10 @@ jobs:
           host: ${{ secrets.OCI_HOST }}
           username: ${{ secrets.OCI_USER }}
           key: ${{ secrets.OCI_PRIVATE_KEY }}
-          script: |
-            # Navegar al directorio profesionalizado
+          script: |            
             cd /home/opc/compliance-system
             
-            # Autenticarse (opcional si el repo es público, obligatorio si es privado)
+            # Autenticarse
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             
             # Bajar las nuevas imágenes
