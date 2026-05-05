@@ -18,7 +18,10 @@ const LoginView = () => {
       <form onSubmit={handleSubmit(onSubmit)} className={styles.loginCard}>
         <h1>Bienvenido de nuevo</h1>
         <input {...register('email')} placeholder="Email" />
+        {errors.email && <span className={styles.error}>{errors.email.message}</span>}
+          
         <input type="password" {...register('password')} placeholder="Contraseña" />
+        {errors.password && <span className={styles.error}>{errors.password.message}</span>}
         <button type="submit">Entrar al Sistema</button>
       </form>
     </div>
