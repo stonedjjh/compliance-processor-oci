@@ -96,3 +96,24 @@ Se implementa un flujo de construcción híbrido para compliance-processor utili
 ### Consecuencias
 * Positivas: Compatibilidad garantizada con el hardware de alto rendimiento de OCI y paridad absoluta entre los entornos de desarrollo y producción.
 * Negativas: Incremento en los tiempos de ejecución del CI/CD debido a la sobrecarga de emulación durante el proceso de empaquetado.
+
+## 6. Estrategia de Despliegue Continuo (CD) mediante SSH y GitHub Actions
+
+### Fecha
+2026-05-04
+
+### Estatus
+En progreso
+
+### Contexto
+Tras estabilizar la construcción de imágenes multi-arquitectura, el proceso de actualización en la instancia de OCI sigue siendo manual (requiere conexión vía PuTTY y ejecución de comandos manuales). Esto introduce latencia en la entrega y aumenta el riesgo de error humano.
+
+### Decisión
+Se implementa un pipeline de Continuous Deployment (CD) basado en el patrón "Push":
+1. Autenticación: Uso de llaves OpenSSH almacenadas en GitHub Secrets para acceso seguro a la instancia de OCI.
+2. Orquestación: Extensión del workflow de GitHub Actions para disparar un job de despliegue tras el éxito de la construcción.
+3. Inmutabilidad: El servidor de producción solo realizará acciones de 'pull' y 'up', eliminando procesos de compilación locales.
+
+### Consecuencias
+* Positivas: Despliegue automático al hacer push, trazabilidad total y reducción del MTTR (Mean Time To Recovery).
+* Negativas: Dependencia de la disponibilidad de la API de GitHub para ejecutar el despliegue.

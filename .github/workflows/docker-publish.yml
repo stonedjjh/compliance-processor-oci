@@ -2,7 +2,7 @@ name: Docker Publish compliance-processor
 
 on:
   push:
-    branches: [ "main", "feature/multi-arch-support" ]
+    branches: [ "main" ]
     paths:
       - 'bff-node/**'
       - 'frontend-react/**'
@@ -102,3 +102,30 @@ jobs:
           build-args: |
             VITE_API_URL=${{ matrix.id == 'front' && secrets.VITE_API_URL || '' }}
             VITE_SOCKET_URL=${{ matrix.id == 'front' && secrets.VITE_SOCKET_URL || '' }}
+
+  deploy:
+    name: Continuous Deployment to OCI
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploying via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USER }}
+          key: ${{ secrets.OCI_PRIVATE_KEY }}
+          script: |
+            # Navegar al directorio profesionalizado
+            cd /home/opc/compliance-system
+            
+            # Autenticarse (opcional si el repo es público, obligatorio si es privado)
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # Bajar las nuevas imágenes
+            docker compose pull
+            
+            # Actualizar los contenedores
+            docker compose up -d
+            
+            # Limpieza de imágenes huérfanas
+            docker image prune -f
