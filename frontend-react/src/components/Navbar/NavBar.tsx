@@ -12,7 +12,7 @@ export const NavBar = () => {
         <Link to="/dashboard/upload" className={styles.link}>
           Subir Archivo
         </Link>
-        <Link to="/dashboard/register" className={styles.link}>
+        <Link to="/auth/register" className={styles.link}>
           Registrarse
         </Link>
       </div>
