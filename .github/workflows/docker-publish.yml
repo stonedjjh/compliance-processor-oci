@@ -67,6 +67,8 @@ jobs:
       - name: Set up QEMU
         if: ${{ matrix.run_flag == 'true' }}
         uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       - name: Set up Docker Buildx
         if: ${{ matrix.run_flag == 'true' }}
@@ -99,6 +101,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.id }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.id }}
           build-args: |
             VITE_API_URL=${{ matrix.id == 'front' && secrets.VITE_API_URL || '' }}
             VITE_SOCKET_URL=${{ matrix.id == 'front' && secrets.VITE_SOCKET_URL || '' }}
