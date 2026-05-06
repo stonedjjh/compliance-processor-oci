@@ -1,8 +1,8 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 import Home from "../view/Home";
 import Error404 from "../view/Error404";
-import LoginView from "../view/LoginView";
-import RegisterView from "../view/RegisterView"; // Tu vista de registro
+import ProtectedRoute from "../components/Auth/ProtectedRoute";
+import routerAuth from "./auth"; 
 import routerDashboard from "./dashboard";
 
 export const router = createBrowserRouter([
@@ -13,13 +13,13 @@ export const router = createBrowserRouter([
   },
   {
     path: "/auth",
-    children: [
-      { path: "login", element: <LoginView /> },
-      { path: "register", element: <RegisterView /> },
-    ],
+    children: routerAuth, // Ahora vienen de su propio archivo
   },
-  // Las rutas del dashboard se mantienen separadas
-  ...routerDashboard,
+  {
+    /* Las rutas del dashboard ahora son "hijas" del protector */
+    element: <ProtectedRoute />, 
+    children: routerDashboard, // Eliminamos el spread (...) para pasarlas como grupo
+  },
 ]);
 
 const MyRoutes = () => <RouterProvider router={router} />;

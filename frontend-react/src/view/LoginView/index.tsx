@@ -1,27 +1,28 @@
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { loginSchema } from '../../utils/validation/login.schema';
+import { useLogin } from '../../hooks/auth/useLogin';
 import styles from './LoginView.module.css';
 
 const LoginView = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: yupResolver(loginSchema)
-  });
 
-  const onSubmit = (data: any) => {
-    // Aquí es donde el punto 3 de la ruta (JWT) entrará en acción
-    console.log("Intentando entrar con:", data);
-  };
+  const { register, handleSubmit, onSubmit, errors } = useLogin();
 
   return (
     <div className={styles.authWrapper}>
       <form onSubmit={handleSubmit(onSubmit)} className={styles.loginCard}>
         <h1>Bienvenido de nuevo</h1>
+        
+        {/* Campo de Email */}
         <input {...register('email')} placeholder="Email" />
         {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
 
+        {/* Campo de Password */}
         <input type="password" {...register('password')} placeholder="Contraseña" />
         {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
+        
+        {/* Error general del servidor (ej: 401 Unauthorized) */}
+        {errors.root && <span className={styles.errorText} style={{ display: 'block', marginBottom: '1rem' }}>
+          {errors.root.message}
+        </span>}
+
         <button type="submit">Entrar al Sistema</button>
       </form>
     </div>

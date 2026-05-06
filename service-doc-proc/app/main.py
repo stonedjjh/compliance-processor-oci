@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .api.v1.routers import documents, healthcheck
+from .api.v1.routers import documents, healthcheck, auth
 
 import logging
 from contextlib import asynccontextmanager
@@ -27,11 +27,12 @@ async def lifespan(app: FastAPI):
 
 
 # Inicializamos FastAPI con el manejador de lifespan
-app = FastAPI(title="Document Processing Service", lifespan=lifespan)
+app = FastAPI(title="Document Processing Service", lifespan=lifespan, version="1.0")
 
 # Registro de rutas
 app.include_router(documents.router, prefix="/api/v1")
 app.include_router(healthcheck.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
 
 
 @app.get("/")

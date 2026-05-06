@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 from uuid import UUID
 from enum import IntEnum
 from datetime import datetime
@@ -37,3 +37,27 @@ class ProcessMessage(BaseModel):
     status: str
     message: str
     file_id: UUID
+
+
+class UserBase(BaseModel):
+    full_name: str
+    email: EmailStr
+
+
+class UserCreate(UserBase):
+    password: str
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserResponse(UserBase):
+    id: UUID
+    is_active: bool
+    must_change_password: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

@@ -1,23 +1,28 @@
-import type { UserRegisterDTO, UserResponse } from '../../types/auth.types';
+import type { UserRegisterDTO, UserResponse, UserLoginDTO } from '../../types/auth.types';
 
 export const registerUserAdapter = (formData: any): UserRegisterDTO => {
- return {
-  full_name: formData.fullName,
-  email: formData.email.toLowerCase(),
-  password: formData.password
- };
+return {
+    // Mapeo: de fullName (React) a full_name (Python)
+    full_name: formData.fullName,
+    
+    // Limpieza: solo enviamos lo que el backend necesita
+    email: formData.email.toLowerCase(),
+    password: formData.password
+  };
 };
 
 export const authUserResponseAdapter = (apiResponse: any): UserResponse => {
  return {
-  id: apiResponse.uuid || apiResponse.id,
-  username: apiResponse.email,
+  // Soportamos tanto 'id' (Python) como 'uuid' por compatibilidad
+  id: apiResponse.user?.id || apiResponse.id || apiResponse.uuid,
+  email: apiResponse.user?.email || apiResponse.email,
   token: apiResponse.access_token,
-  role: apiResponse.role || 'user'
+  role: apiResponse.user?.role || apiResponse.role || 'analyst'
  };
 };
 
-export const loginUserAdapter = (formData: any) => ({
-  username: formData.email, // El API a veces pide 'username' en lugar de 'email'
-  password: formData.password
+export const loginUserAdapter = (formData: any): UserLoginDTO => ({
+ // Mantenemos 'email' para que coincida con el esquema Pydantic de Python
+ email: formData.email.toLowerCase(),
+ password: formData.password
 });

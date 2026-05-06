@@ -15,18 +15,10 @@ class User(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    username: Mapped[str] = mapped_column(
-        String, unique=True, index=True, nullable=False
-    )
-    first_name: Mapped[str] = mapped_column(String, nullable=False)
-    last_name: Mapped[str] = mapped_column(String, nullable=False)
+    full_name: Mapped[str] = mapped_column(String, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
-
-    # Flags de estado y seguridad
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=True)
-
-    # Auditoría y Soft Delete
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -38,4 +30,4 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<User(email={self.email}, username={self.username})>"
+        return f"<User(email={self.email}, full_name={self.full_name})>"

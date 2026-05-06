@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import multer from "multer";
 import { DocumentAdapter } from "./adapters/document.adapter";
 import documentRoutes from "./routes/document.routes";
+import authRoutes from "./routes/auth.routes";
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api/v1/documents", documentRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 const notificationNamespace = io.of("/notifications");
 notificationNamespace.on("connection", (socket) => {  

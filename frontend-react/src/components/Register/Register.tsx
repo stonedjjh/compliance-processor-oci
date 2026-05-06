@@ -3,18 +3,31 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { registerSchema } from '../../utils/validation/register.schema';
 import { registerUserAdapter } from '../../api/adapters/auth.adapter';
 import styles from './Register.module.css';
+import { authService } from '../../services/auth.service'
 
 const Register = () => {
  const { register, handleSubmit, formState: { errors } } = useForm({
   resolver: yupResolver(registerSchema)
  });
 
- const onSubmit = async (data: any) => {
-  // Aplicamos el adapter antes de enviar al BFF
-  const adaptedData = registerUserAdapter(data);
-  console.log('Enviando DTO limpio:', adaptedData);
-  
-  // Aquí vendría la llamada al servicio que integraremos en el punto 4
+const onSubmit = async (data: any) => {
+  // Log para verificar qué sale del formulario
+  //console.log('Datos capturados del form:', data);
+
+  try {   
+   const adaptedData = registerUserAdapter(data);
+   //console.log('Enviando DTO adaptado:', adaptedData);
+   
+   await authService.register(adaptedData);
+      
+   //console.log('Respuesta del servidor:', response);
+   alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
+
+   // Aquí podrías usar un navigate('/login') si usas react-router
+  } catch (error: any) {   
+   console.error('Error en el proceso de registro:', error);
+   alert(`Error al registrar: ${error.message}`);
+  }
  };
 
  return (
