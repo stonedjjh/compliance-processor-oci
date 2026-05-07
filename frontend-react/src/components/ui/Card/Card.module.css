@@ -1,0 +1,55 @@
+.card {
+  background-color: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+/* Efecto de elevación al pasar el mouse */
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-accent);
+}
+
+.cardImage {
+  padding: 24px 24px 0 24px;
+  display: flex;
+  justify-content: flex-start;
+  font-size: 2.5rem; /* Para iconos emoji como los que tienes */
+}
+
+.cardHeader {
+  padding: 16px 24px;
+}
+
+.cardHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.cardHeader p {
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.cardBody {
+  padding: 0 24px 24px 24px;
+  flex: 1;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.cardFooter {
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg-alt);
+}
