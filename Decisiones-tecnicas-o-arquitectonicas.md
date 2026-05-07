@@ -197,6 +197,7 @@ Se adoptó una arquitectura de componentes basada en dos pilares:
 
 1. **Patrón de Compound Components (Namespacing)**: Los layouts (`PublicLayout` y `DashboardLayout`) se estructuran como componentes compuestos. Esto permite definir sub-componentes internos (`.Header`, `.Main`, `.Footer`, `.Sidebar`) que se pueden inyectar o remover según la necesidad de la ruta específica desde el archivo de rutas, manteniendo una sintaxis semántica y centralizada.
 2. **Sistema de Diseño (UI Kit)**: Se centralizó la identidad visual mediante variables CSS globales y la creación de componentes de UI reutilizables (como el componente `Button`). Estos componentes gestionan variantes visuales (primary, secondary, outline) y estados de interacción (hover, focus, disabled) de forma estandarizada.
+3. **Documentación Integrada (Self-documented Components)**: Se establece como estándar obligatorio que cada componente de la carpeta `ui/` incluya su propia guía de uso en formato Markdown (`Guia-de-uso-[Nombre].md` o `Readme.md`). Esta guía debe detallar la estructura de Compound Components, las props disponibles (especialmente las de estilo como `align`) y ejemplos de implementación para asegurar la autonomía de cualquier desarrollador en el equipo.
 
 ### Consecuencias
 
