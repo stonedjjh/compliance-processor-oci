@@ -1,0 +1,38 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.header {
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #ffffff; /* Ajusta según el color de tu NavBar */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mainContent {
+  flex: 1; /* Esto empuja el footer al final de la pantalla */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.footer {
+  padding: 2rem 1rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* Responsividad para el contenido principal */
+@media (max-width: 768px) {
+  .footer {
+    padding: 1.5rem 1rem;
+  }
+}
