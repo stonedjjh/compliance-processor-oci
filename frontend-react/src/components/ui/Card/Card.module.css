@@ -1,3 +1,13 @@
+/* Alineación para el contenedor de la imagen (Flexbox) */
+.left { justify-content: flex-start; }
+.center { justify-content: center; }
+.right { justify-content: flex-end; }
+
+/* Alineación para el texto (Header y Body) */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
 .card {
   background-color: var(--color-bg-main);
   border: 1px solid var(--color-border);
@@ -19,7 +29,7 @@
 .cardImage {
   padding: 24px 24px 0 24px;
   display: flex;
-  justify-content: flex-start;
+  margin-bottom: 24px;
   font-size: 2.5rem; /* Para iconos emoji como los que tienes */
 }
 
