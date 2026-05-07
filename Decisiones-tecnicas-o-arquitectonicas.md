@@ -176,3 +176,29 @@ Se implementó un flujo de identidad basado en dos pilares:
 
 - Positivas: Eliminación de errores de compatibilidad por dependencias de terceros (Passlib), autenticación stateless que facilita el escalado horizontal y una separación clara de responsabilidades entre el servicio de validación (Python) y el emisor de tokens (Node.js).
 - Negativas: El manejo de la invalidación de tokens (logout) debe gestionarse exclusivamente en el cliente mediante la limpieza de almacenamiento local, a menos que se implemente una lista negra (blacklist) en el servidor.
+
+## 8. Arquitectura de Layouts mediante Compound Components y Estandarización de UI
+
+### Fecha
+
+2026-05-07
+
+### Estatus
+
+Aceptado
+
+### Contexto
+
+La aplicación ha crecido diferenciando claramente entre áreas públicas (Landing page, Login, Registro) y áreas privadas de trabajo (Dashboard). Mantener una única estructura de página (Layout) obligaba a usar condicionales complejos para ocultar o mostrar elementos como el Sidebar o el Footer, lo que ensuciaba el código y dificultaba el escalado. Además, la interfaz carecía de un sistema de diseño consistente, resultando en componentes visuales con estilos inconsistentes y difíciles de mantener de forma global.
+
+### Decisión
+
+Se adoptó una arquitectura de componentes basada en dos pilares:
+
+1. **Patrón de Compound Components (Namespacing)**: Los layouts (`PublicLayout` y `DashboardLayout`) se estructuran como componentes compuestos. Esto permite definir sub-componentes internos (`.Header`, `.Main`, `.Footer`, `.Sidebar`) que se pueden inyectar o remover según la necesidad de la ruta específica desde el archivo de rutas, manteniendo una sintaxis semántica y centralizada.
+2. **Sistema de Diseño (UI Kit)**: Se centralizó la identidad visual mediante variables CSS globales y la creación de componentes de UI reutilizables (como el componente `Button`). Estos componentes gestionan variantes visuales (primary, secondary, outline) y estados de interacción (hover, focus, disabled) de forma estandarizada.
+
+### Consecuencias
+
+- Positivas: Máxima flexibilidad para modificar la estructura de las páginas sin duplicar lógica. El código es más legible y profesional. La estandarización de colores y componentes garantiza una experiencia de usuario (UX) coherente y facilita cambios globales de estilo (rebranding) en segundos.
+- Negativas: Incrementa la complejidad inicial del tipado en TypeScript para gestionar los componentes compuestos y requiere que el equipo siga el flujo de creación de componentes en lugar de usar etiquetas HTML directas.
