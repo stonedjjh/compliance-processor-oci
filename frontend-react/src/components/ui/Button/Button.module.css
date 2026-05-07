@@ -1,0 +1,61 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 2px solid transparent;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+/* Estado Deshabilitado */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* VARIANTE: PRIMARY (El azul de acción) */
+.primary {
+  background-color: var(--color-accent);
+  color: var(--color-text-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* VARIANTE: SECONDARY (Fondo claro corporativo) */
+.secondary {
+  background-color: var(--color-bg-alt);
+  color: var(--color-primary-dark);
+  border-color: var(--color-border);
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+/* VARIANTE: OUTLINE (Transparente con borde azul) */
+.outline {
+  background-color: transparent;
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.outline:hover:not(:disabled) {
+  background-color: rgba(30, 102, 224, 0.05);
+}

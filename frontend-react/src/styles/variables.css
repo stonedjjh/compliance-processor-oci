@@ -1,0 +1,25 @@
+/* src/styles/variables.css */
+
+:root {
+  /* Colores Principales (Identidad) */
+  --color-primary-dark: #10162A;    /* El oscuro de tu NavBar actual */
+  --color-accent: #1E66E0;          /* Azul brillante para botones y llamadas a la acción */
+  --color-accent-hover: #164eb5;    /* Versión más oscura para estados hover */
+  
+  /* Colores de Superficie y Fondos */
+  --color-bg-main: #FFFFFF;         /* Fondo general de la página */
+  --color-bg-alt: #F8F9FA;          /* Fondo para secciones que necesitan contraste (como el Hero) */
+  --color-bg-footer: #1C1E23;       /* Fondo oscuro para el footer (estilo corporativo) */
+
+  /* Colores de Texto */
+  --color-text-main: #1E293B;       /* Gris casi negro para lectura principal */
+  --color-text-muted: #64748B;      /* Gris suave para subtítulos o leyendas */
+  --color-text-white: #FFFFFF;      /* Blanco para textos sobre fondos oscuros */
+
+  /* Bordes y Separadores */
+  --color-border: #E1E8EE;          /* Gris muy claro para bordes sutiles */
+  
+  /* Sombras (Elevation) */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
