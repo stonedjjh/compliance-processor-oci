@@ -1,40 +1,101 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
+import Button from "../../components/ui/Button/Button";
+import Card from "../../components/ui/Card/Card"; // <--- Importamos el nuevo Card
 import styles from "./Home.module.css";
 
-const Home = () => {
+import heroImage from "../../assets/compliance-hero.png";
+
+const Home: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsAuthenticated(!!token);
+  }, []);
+
   return (
-    <section className={styles.container}>
-      <header className={styles.header}>
-        <h1>Panel de Control de Cumplimiento</h1>
-        <p><strong>Gestión centralizada de auditoría y procesamiento de activos.</strong></p>
-      </header>
+    <main className={styles.mainContainer}>
+      {/* === SECCIÓN HERO === */}
+      <section className={styles.heroSection}>
+        <div className={styles.heroLayout}>
+          <div className={styles.heroContent}>
+            <h1>Gestión Inteligente de Cumplimiento</h1>
+            <p>
+              Automatice el análisis documental, audite operaciones y garantice
+              la trazabilidad total de sus activos con nuestra arquitectura
+              distribuida de alto rendimiento.
+            </p>
 
-      <hr className={styles.separator} />
+            <div className={styles.heroActions}>
+              {isAuthenticated ? (
+                <Button
+                  variant="primary"
+                  onClick={() => navigate("/dashboard/upload")}
+                >
+                  Ir al Dashboard
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="primary"
+                    onClick={() => navigate("/auth/login")}
+                  >
+                    Iniciar Sesión
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/auth/register")}
+                  >
+                    Registrarse
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
 
-      <article className={styles.mainArticle}>
-        <h2>Bienvenido al Sistema</h2>
-        <p>
-          Esta plataforma permite la carga, validación y seguimiento de documentos bajo 
-          estándares de seguridad empresarial. El procesamiento se realiza en tiempo real 
-          mediante una arquitectura distribuida y escalable.
-        </p>
-      </article>
+          <div className={styles.heroVisual}>
+            <img src={heroImage} alt="Flujo de cumplimiento tecnológico" />
+          </div>
+        </div>
+      </section>
 
-      <div className={styles.grid}>
-        <section className={styles.card}>
-          <h3>Gestión de Documentos</h3>
-          <p>Utilice el módulo de subida para procesar nuevos archivos. El procesador extraerá y validará la información automáticamente.</p>
-        </section>
+      {/* === SECCIÓN CAPACIDADES (REFACTORIZADA CON CARDS) === */}
+      <section className={styles.featuresSection}>
+        <div className={styles.container}>
+          <h2 className={styles.featuresTitle}>Capacidades de la Plataforma</h2>
+          <div className={styles.grid}>
+            <Card>
+              <Card.Image align="center">📄</Card.Image>
+              <Card.Header align="center" title="Procesamiento Documental" />
+              <Card.Body>
+                Carga segura y análisis en tiempo real. Extracción automática de
+                metadatos y validación bajo estándares corporativos.
+              </Card.Body>
+            </Card>
 
-        <section className={styles.card}>
-          <h3>Acceso y Registro</h3>
-          <p>Gestione los perfiles de usuario y niveles de acceso para garantizar la trazabilidad de cada operación en el sistema.</p>
-        </section>
-      </div>
+            <Card>
+              <Card.Image align="center">👤</Card.Image>
+              <Card.Header align="center" title="Auditoría de Acceso" />
+              <Card.Body>
+                Gestión granular de perfiles y trazabilidad de cada operación
+                para una auditoría transparente y segura.
+              </Card.Body>
+            </Card>
 
-      <footer className={styles.footer}>
-        <p>Estado de la infraestructura: Operacional | Arquitectura: ARM64/x86_64 | v1.0.4-deploy-test</p>
-      </footer>
-    </section>
+            <Card>
+              <Card.Image align="center">📊</Card.Image>
+              <Card.Header align="center" title="Monitoreo Activo" />
+              <Card.Body>
+                Visualización del estado de cumplimiento de sus activos y
+                documentos con un sistema de alertas proactivas.
+              </Card.Body>
+            </Card>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 };
 
