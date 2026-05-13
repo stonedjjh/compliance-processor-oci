@@ -23,3 +23,25 @@
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
+
+/* ==========================================================================
+   Dark Mode Theme
+   ========================================================================== */
+
+[data-theme="dark"] {
+  /* Colores Principales (Identidad) */
+  --color-primary-dark: #10B981;    /* Emerald 500: Títulos y labels para máxima legibilidad */
+  --color-accent: #047857;          /* Emerald 700: Acentos, botones primarios y focos */
+  --color-accent-hover: #065F46;    /* Emerald 800: Estados hover (más oscuro) */
+
+  /* Colores de Superficie y Fondos */
+  --color-bg-main: #18181B;         /* Zinc 900: Fondo general oscuro profundo */
+  --color-bg-alt: #27272A;          /* Zinc 800: Superficies elevadas (Cards, Hero, Inputs) */
+
+  /* Colores de Texto */
+  --color-text-main: #F4F4F5;       /* Zinc 100: Texto principal nítido */
+  --color-text-muted: #A1A1AA;      /* Zinc 400: Textos secundarios y placeholders */
+
+  /* Bordes y Separadores */
+  --color-border: #3F3F46;          /* Zinc 700: Separadores sutiles */
+}

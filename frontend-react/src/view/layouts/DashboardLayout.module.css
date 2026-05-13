@@ -1,0 +1,106 @@
+.appWrapper {
+  background-color: #f4f7f9; /* Fondo de aplicación profesional */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  display: flex;
+  flex: 1;
+  max-width: 1600px; /* Permitimos más ancho para tablas y datos */
+  margin: 0 auto;
+  width: 100%;
+  gap: 24px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  height: fit-content;
+  position: sticky;
+  top: 100px; /* Se queda fijo mientras haces scroll */
+}
+
+.sideList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sideItem {
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #5f6368;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sideItem:hover {
+  background-color: #f1f3f4;
+  color: #1a73e8;
+}
+
+.sideItemActive {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid #e8eaed;
+  margin: 16px 0;
+}
+
+/* CONTENIDO PRINCIPAL */
+.content {
+  flex: 1;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  min-height: 80vh;
+}
+
+/* RESPONSIVIDAD */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: static;
+    margin-bottom: 16px;
+  }
+  
+  .sideList {
+    flex-direction: row;
+    overflow-x: auto; /* Menu horizontal en móvil */
+    padding-bottom: 8px;
+  }
+
+  .sideItem, .sideItemActive {
+    white-space: nowrap;
+  }
+}
