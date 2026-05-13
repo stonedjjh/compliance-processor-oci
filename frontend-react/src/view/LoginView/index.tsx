@@ -1,30 +1,61 @@
-import { useLogin } from '../../hooks/auth/useLogin';
-import styles from './LoginView.module.css';
+import { useLogin } from "../../hooks/auth/useLogin";
+import Card from "../../components/ui/Card/Card";
+import Input from "../../components/ui/Input/Input";
+import Button from "../../components/ui/Button/Button";
+import styles from "./LoginView.module.css";
 
 const LoginView = () => {
-
   const { register, handleSubmit, onSubmit, errors } = useLogin();
 
   return (
     <div className={styles.authWrapper}>
-      <form onSubmit={handleSubmit(onSubmit)} className={styles.loginCard}>
-        <h1>Bienvenido de nuevo</h1>
-        
-        {/* Campo de Email */}
-        <input {...register('email')} placeholder="Email" />
-        {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
+      <Card className={styles.loginCard} isHoverable={false}>
+        <Card.Header
+          title="Bienvenido de nuevo"
+          subtitle="Ingrese sus credenciales para acceder al sistema"
+          align="center"
+        />
 
-        {/* Campo de Password */}
-        <input type="password" {...register('password')} placeholder="Contraseña" />
-        {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
-        
-        {/* Error general del servidor (ej: 401 Unauthorized) */}
-        {errors.root && <span className={styles.errorText} style={{ display: 'block', marginBottom: '1rem' }}>
-          {errors.root.message}
-        </span>}
+        <Card.Body>
+          <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+            {/* El componente Input gestiona el label y el error internamente */}
+            <Input
+              label="Correo Electrónico"
+              placeholder="Email"
+              error={errors.email?.message}
+              {...register("email")}
+            />
 
-        <button type="submit">Entrar al Sistema</button>
-      </form>
+            <Input
+              label="Contraseña"
+              type="password"
+              placeholder="Contraseña"
+              error={errors.password?.message}
+              {...register("password")}
+            />
+
+            {/* Manejo de errores globales del servidor */}
+            {errors.root && (
+              <div className={styles.globalError}>{errors.root.message}</div>
+            )}
+
+            <Button
+              type="submit"
+              variant="primary"
+              className={styles.submitBtn}
+            >
+              Entrar al Sistema
+            </Button>
+          </form>
+        </Card.Body>
+
+        <Card.Footer>
+          <div className={styles.footerLinks}>
+            <span>¿No tiene cuenta?</span>
+            <a href="/auth/register">Regístrese aquí</a>
+          </div>
+        </Card.Footer>
+      </Card>
     </div>
   );
 };

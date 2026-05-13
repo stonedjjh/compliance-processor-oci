@@ -1,92 +1,35 @@
 /* LoginView.module.css */
 
 .authWrapper {
- display: flex;
- align-items: center;
- justify-content: center;
- min-height: 100vh;
- background-color: #f4f7f6; /* Gris neutro profesional */
- padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 160px); /* Ajuste para centrar considerando el layout */
+  padding: 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px; /* Un pequeño margen interno para que los inputs no rocen el borde */
 }
 
 .loginCard {
- background: #ffffff;
- padding: 40px;
- border-radius: 8px;
- box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
- width: 100%;
- max-width: 400px;
- display: flex;
- flex-direction: column;
- gap: 20px;
+  max-width: 400px;
+  width: 100%;
+  /* Evitamos que la tarjeta cambie de tamaño si aparecen mensajes de error */
+  min-height: 450px; 
+  display: flex;
+  flex-direction: column;
 }
 
-.loginCard h1 {
- margin: 0 0 10px 0;
- font-size: 24px;
- color: #2c3e50; /* Azul marino corporativo */
- text-align: center;
- font-weight: 600;
-}
-
-.loginCard input {
- width: 100%;
- padding: 12px 15px;
- border: 1px solid #dcdfe6;
- border-radius: 4px;
- font-size: 16px;
- transition: border-color 0.3s ease;
- box-sizing: border-box;
-}
-
-.loginCard input:focus {
- outline: none;
- border-color: #409eff; /* Azul de enfoque */
- box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-}
-
-.loginCard button {
- width: 100%;
- padding: 12px;
- background-color: #2c3e50;
- color: white;
- border: none;
- border-radius: 4px;
- font-size: 16px;
- font-weight: 500;
- cursor: pointer;
- transition: background-color 0.3s ease;
- margin-top: 10px;
-}
-
-.loginCard button:hover {
- background-color: #34495e;
-}
-
-.loginCard button:active {
- transform: translateY(1px);
-}
-
-.errorText {
- color: #f56c6c; /* Rojo de error estándar */
- font-size: 14px;
- margin: -15px 0 0 0;
-}
-
-.footerLinks {
- display: flex;
- justify-content: center;
- gap: 10px;
- margin-top: 15px;
- font-size: 14px;
- color: #606266;
-}
-
-.footerLinks a {
- color: #409eff;
- text-decoration: none;
-}
-
-.footerLinks a:hover {
- text-decoration: underline;
+.globalError {
+  background-color: #fef2f2;
+  color: #ef4444;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  border: 1px solid #fee2e2;
+  text-align: center;
 }
