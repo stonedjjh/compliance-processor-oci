@@ -72,14 +72,14 @@ export const UploadBox = () => {
         accept=".txt"
       />
 
-      {/* Contenedor con espacio reservado */}
+      {/* Contenedor con minHeight fijo para evitar el 'Layout Shift' (saltos en pantalla) */}
       <div className={styles.status_container}>
         <p
           className={`${styles.status_message} ${
             statusMessage?.isError ? styles.error : styles.success
           } ${statusMessage ? styles.visible : styles.hidden}`}
         >
-          {statusMessage?.text || ""}
+          {statusMessage?.text || "\u00A0"}
         </p>
       </div>
     </div>

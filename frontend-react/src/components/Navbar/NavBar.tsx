@@ -15,9 +15,9 @@ export const NavBar = () => {
     <nav className={styles.navbar}>
       <div className={styles.logo}>Compliance App</div>
       <div className={styles.menu}>
-        <Link to="/" className={styles.link}>
+        {/* <Link to="/" className={styles.link}>
           Inicio
-        </Link>
+        </Link> */}
 
         {isAuthenticated && (
           <Link to="/dashboard/upload" className={styles.link}>
@@ -34,9 +34,14 @@ export const NavBar = () => {
             Cerrar Sesión
           </button>
         ) : (
-          <Link to="/auth/register" className={styles.link}>
-            Registrarse
-          </Link>
+          <>
+            <Link to="/auth/login" className={styles.link}>
+              Iniciar Sesión
+            </Link>
+            <Link to="/auth/register" className={styles.link}>
+              Registrarse
+            </Link>
+          </>
         )}
       </div>
     </nav>

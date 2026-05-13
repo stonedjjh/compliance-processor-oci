@@ -1,19 +1,30 @@
-.card {
-  background: var(--color-bg-main);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  padding: 1.5rem;
+/* Contenedor opcional para mantener el margen superior de la tabla */
+.table_container {
   margin-top: 2rem;
-  border: 1px solid var(--color-border);
+  width: 100%;
 }
 
 .table_header {
-  height: 60px; /* Altura fija para el header */
+  min-height: 60px; /* Cambiamos a min-height para que crezca si es necesario */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1.5rem;
+  flex-wrap: wrap; /* Permite que si la pantalla es pequeña, no colapsen los elementos */
+  gap: 1rem; /* Margen global en caso de que se dividan en líneas */
+
   border-bottom: 1px solid var(--color-border);
+
+  padding: 1rem 1.5rem;
+}
+
+.header_left {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Define el espacio horizontal entre el h3 y el span */
+}
+
+.header_left h3 {
+  margin: 0; /* Quitamos el margen por defecto para un centrado perfecto */
 }
 
 .count {
@@ -31,9 +42,9 @@
   /* Si seleccionan 10, la tabla medirá aprox 550px. 
      Reservamos ese espacio siempre para que no salte.
   */
-  min-height: 550px; 
+  min-height: 550px;
   max-height: 550px; /* Evita que crezca infinitamente */
-  overflow-y: auto;  /* Scroll si hay más contenido del que cabe */
+  overflow-y: auto; /* Scroll si hay más contenido del que cabe */
   position: relative;
   background-color: var(--color-bg-main);
 }
@@ -110,9 +121,18 @@
   text-transform: uppercase;
 }
 
-.uploaded { background: #dbeafe; color: #1e40af; }
-.processed { background: #dcfce7; color: #166534; }
-.failed { background: #fee2e2; color: #991b1b; }
+.uploaded {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.processed {
+  background: #dcfce7;
+  color: #166534;
+}
+.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
 
 .empty_state {
   text-align: center;
@@ -122,11 +142,20 @@
 }
 
 /* Estados en Español */
-.recibido { background: #dbeafe; color: #1e40af; }
+.recibido {
+  background: #dbeafe;
+  color: #1e40af;
+}
 
 /* Estados en Inglés (Uppercase por si acaso) */
-.processed { background: #dcfce7; color: #166534; }
-.failed { background: #fee2e2; color: #991b1b; }
+.processed {
+  background: #dcfce7;
+  color: #166534;
+}
+.failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
 
 .pagination {
   display: flex;
@@ -157,13 +186,6 @@
 .disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.table_header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
 }
 
 .page_selector {

@@ -1,19 +1,17 @@
-import RegisterView from "../../view/RegisterView";
-import Layout from "../../view/layouts/DashboardLayout";
+import { Navigate } from "react-router";
 import ManagementDocument from "../../view/ManagementDocument";
 
 const routerDashboard = [
   {
     path: "/dashboard",
-    element: <Layout />,
     children: [
+      {
+        index: true,
+        element: <Navigate to="/dashboard/upload" replace />,
+      },
       {
         path: "upload",
         element: <ManagementDocument />,
-      },
-      {
-        path: "register",
-        element: <RegisterView />,
       },
     ],
   },
