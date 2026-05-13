@@ -8,10 +8,12 @@ import { authService } from "../../services/auth.service";
 import Card from "../ui/Card/Card";
 import Input from "../ui/Input/Input";
 import Button from "../ui/Button/Button";
+import Toast from "../ui/Toast/Toast";
 import styles from "./Register.module.css";
 
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const navigate = useNavigate();
 
   const {
@@ -30,8 +32,10 @@ const Register = () => {
       const adaptedData = registerUserAdapter(data);
       await authService.register(adaptedData);
 
-      alert("¡Registro exitoso! Serás redirigido para iniciar sesión.");
-      navigate("/auth/login");
+      setToastMessage("¡Registro exitoso! Redirigiendo a inicio de sesión...");
+      setTimeout(() => {
+        navigate("/auth/login");
+      }, 2500); // Damos 2.5s para que vea el Toast antes de redirigir
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
@@ -44,59 +48,71 @@ const Register = () => {
   };
 
   return (
-    <Card className={styles.registerCard} isHoverable={false}>
-      <Card.Header
-        title="Crear una cuenta"
-        subtitle="Complete el formulario para registrarse"
-        align="center"
-      />
+    <>
+      <Card className={styles.registerCard} isHoverable={false}>
+        <Card.Header
+          title="Crear una cuenta"
+          subtitle="Complete el formulario para registrarse"
+          align="center"
+        />
 
-      <Card.Body>
-        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-          {errors.root && (
-            <div className={styles.globalError}>{errors.root.message}</div>
-          )}
+        <Card.Body>
+          <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+            {errors.root && (
+              <div className={styles.globalError}>{errors.root.message}</div>
+            )}
 
-          <Input
-            label="Nombre Completo"
-            error={errors.fullName?.message}
-            disabled={isLoading}
-            {...register("fullName")}
-          />
-          <Input
-            label="Correo Electrónico"
-            error={errors.email?.message}
-            disabled={isLoading}
-            {...register("email")}
-          />
-          <Input
-            label="Contraseña"
-            type="password"
-            error={errors.password?.message}
-            disabled={isLoading}
-            {...register("password")}
-          />
-          <Input
-            label="Confirmar Contraseña"
-            type="password"
-            error={errors.confirmPassword?.message}
-            disabled={isLoading}
-            {...register("confirmPassword")}
-          />
+            <Input
+              label="Nombre Completo"
+              error={errors.fullName?.message}
+              disabled={isLoading}
+              {...register("fullName")}
+            />
+            <Input
+              label="Correo Electrónico"
+              error={errors.email?.message}
+              disabled={isLoading}
+              {...register("email")}
+            />
+            <Input
+              label="Contraseña"
+              type="password"
+              error={errors.password?.message}
+              disabled={isLoading}
+              {...register("password")}
+            />
+            <Input
+              label="Confirmar Contraseña"
+              type="password"
+              error={errors.confirmPassword?.message}
+              disabled={isLoading}
+              {...register("confirmPassword")}
+            />
 
-          <Button type="submit" variant="primary" disabled={isLoading}>
-            {isLoading ? "Registrando..." : "Crear Cuenta"}
-          </Button>
-        </form>
-      </Card.Body>
+            <Button type="submit" variant="primary" disabled={isLoading}>
+              {isLoading ? "Registrando..." : "Crear Cuenta"}
+            </Button>
+          </form>
+        </Card.Body>
 
-      <Card.Footer>
-        <div className={styles.footerLinks}>
-          <span>¿Ya tiene una cuenta?</span>
-          <a href="/auth/login">Inicie sesión aquí</a>
-        </div>
-      </Card.Footer>
-    </Card>
+        <Card.Footer>
+          <div className={styles.footerLinks}>
+            <span>¿Ya tiene una cuenta?</span>
+            <a href="/auth/login">Inicie sesión aquí</a>
+          </div>
+        </Card.Footer>
+      </Card>
+
+      {/* Renderizado condicional del Toast */}
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          type="success"
+          duration={2500}
+          onClose={() => setToastMessage("")}
+        />
+      )}
+    </>
   );
 };
 
