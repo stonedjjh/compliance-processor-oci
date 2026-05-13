@@ -3,11 +3,11 @@ import styles from "./Navbar.module.css";
 
 export const NavBar = () => {
   const navigate = useNavigate();
-  const isAuthenticated = !!localStorage.getItem('token');
+  const isAuthenticated = !!localStorage.getItem("token");
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/auth/login", { replace: true });
   };
 
@@ -15,20 +15,32 @@ export const NavBar = () => {
     <nav className={styles.navbar}>
       <div className={styles.logo}>Compliance App</div>
       <div className={styles.menu}>
-        <Link to="/" className={styles.link}>Inicio</Link>
-        
+        <Link to="/" className={styles.link}>
+          Inicio
+        </Link>
+
         {isAuthenticated && (
-          <Link to="/dashboard/upload" className={styles.link}>Subir Archivo</Link>
+          <Link to="/dashboard/upload" className={styles.link}>
+            Subir Archivo
+          </Link>
         )}
 
         {isAuthenticated ? (
-          <button onClick={handleLogout} className={styles.link} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          <button
+            onClick={handleLogout}
+            className={styles.link}
+            style={{ background: "none", border: "none", cursor: "pointer" }}
+          >
             Cerrar Sesión
           </button>
         ) : (
-          <Link to="/auth/register" className={styles.link}>Registrarse</Link>
+          <Link to="/auth/register" className={styles.link}>
+            Registrarse
+          </Link>
         )}
       </div>
     </nav>
   );
 };
+
+export default NavBar;
