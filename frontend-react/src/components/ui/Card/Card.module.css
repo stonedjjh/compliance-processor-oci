@@ -20,10 +20,9 @@
 }
 
 /* Efecto de elevación al pasar el mouse */
-.card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-accent);
+.hoverable:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
 }
 
 .cardImage {

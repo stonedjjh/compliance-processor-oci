@@ -7,6 +7,7 @@ type Alignment = "left" | "center" | "right";
 interface CardProps {
   children: ReactNode;
   className?: string;
+  isHoverable?: boolean;
 }
 
 // 1. Sub-componentes con soporte para alineación
@@ -41,8 +42,14 @@ const Card: React.FC<CardProps> & {
   Header: React.FC<{ title: string; subtitle?: string; align?: Alignment }>;
   Body: React.FC<{ children: ReactNode; align?: Alignment }>;
   Footer: React.FC<{ children: ReactNode }>;
-} = ({ children, className = "" }) => {
-  return <div className={`${styles.card} ${className}`}>{children}</div>;
+} = ({ children, className = "", isHoverable = true }) => {
+  return (
+    <div
+      className={`${styles.card} ${isHoverable ? styles.hoverable : ""} ${className}`}
+    >
+      {children}
+    </div>
+  );
 };
 
 Card.Image = CardImage;

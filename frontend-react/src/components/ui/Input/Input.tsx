@@ -13,7 +13,6 @@ const Input: React.FC<InputProps> = ({
   className = "",
   ...props
 }) => {
-  // Generamos un ID único si no se proporciona uno para vincular label e input
   const inputId = id || `input-${props.name}`;
 
   return (
@@ -30,7 +29,10 @@ const Input: React.FC<InputProps> = ({
         {...props}
       />
 
-      {error && <span className={styles.errorMessage}>{error}</span>}
+      {/* El contenedor siempre existe, pero el mensaje solo se renderiza si hay error */}
+      <div className={styles.errorArea}>
+        {error && <span className={styles.errorMessage}>{error}</span>}
+      </div>
     </div>
   );
 };

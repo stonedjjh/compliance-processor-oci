@@ -18,11 +18,12 @@ El componente se compone de un contenedor principal y cuatro sub-componentes esp
 
 Disponible en Card.Image, Card.Header y Card.Body. Define la alineacion horizontal del contenido.
 
-| Valor          | Descripcion                                                                          |
-| :------------- | :----------------------------------------------------------------------------------- |
-| left (default) | Alinea el contenido a la izquierda. Ideal para dashboards densos.                    |
-| center         | Alinea el contenido al centro. Recomendado para secciones Hero o de caracteristicas. |
-| right          | Alinea el contenido a la derecha.                                                    |
+| Valor           | Descripcion                                                                          |
+| :-------------- | :----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| left (default)  | Alinea el contenido a la izquierda. Ideal para dashboards densos.                    |
+| center          | Alinea el contenido al centro. Recomendado para secciones Hero o de caracteristicas. |
+| right           | Alinea el contenido a la derecha.                                                    |
+| **isHoverable** | boolean                                                                              | Si es `true`, la card realiza un desplazamiento hacia arriba (jump) al pasar el cursor. Por defecto es `true`. |
 
 ---
 
