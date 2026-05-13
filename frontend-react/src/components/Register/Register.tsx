@@ -1,56 +1,103 @@
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { registerSchema } from '../../utils/validation/register.schema';
-import { registerUserAdapter } from '../../api/adapters/auth.adapter';
-import styles from './Register.module.css';
-import { authService } from '../../services/auth.service'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { registerSchema } from "../../utils/validation/register.schema";
+import { registerUserAdapter } from "../../api/adapters/auth.adapter";
+import { authService } from "../../services/auth.service";
+import Card from "../ui/Card/Card";
+import Input from "../ui/Input/Input";
+import Button from "../ui/Button/Button";
+import styles from "./Register.module.css";
 
 const Register = () => {
- const { register, handleSubmit, formState: { errors } } = useForm({
-  resolver: yupResolver(registerSchema)
- });
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-const onSubmit = async (data: any) => {
-  // Log para verificar qué sale del formulario
-  //console.log('Datos capturados del form:', data);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm({
+    resolver: yupResolver(registerSchema),
+  });
 
-  try {   
-   const adaptedData = registerUserAdapter(data);
-   //console.log('Enviando DTO adaptado:', adaptedData);
-   
-   await authService.register(adaptedData);
-      
-   //console.log('Respuesta del servidor:', response);
-   alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
+  const onSubmit = async (data: any) => {
+    setIsLoading(true);
 
-   // Aquí podrías usar un navigate('/login') si usas react-router
-  } catch (error: any) {   
-   console.error('Error en el proceso de registro:', error);
-   alert(`Error al registrar: ${error.message}`);
-  }
- };
+    try {
+      const adaptedData = registerUserAdapter(data);
+      await authService.register(adaptedData);
 
- return (
-  <div className={styles.container}>
-   <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-    <h2>Crear Cuenta</h2>
-    
-    <input {...register('fullName')} placeholder="Nombre Completo" />
-    <p className={styles.errorText}>{errors.fullName?.message}</p>
+      alert("¡Registro exitoso! Serás redirigido para iniciar sesión.");
+      navigate("/auth/login");
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Ocurrió un error inesperado.";
+      setError("root", { type: "manual", message: errorMessage });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    <input {...register('email')} placeholder="Correo Electrónico" />
-    <p className={styles.errorText}>{errors.email?.message}</p>
+  return (
+    <Card className={styles.registerCard} isHoverable={false}>
+      <Card.Header
+        title="Crear una cuenta"
+        subtitle="Complete el formulario para registrarse"
+        align="center"
+      />
 
-    <input type="password" {...register('password')} placeholder="Contraseña" />
-    <p className={styles.errorText}>{errors.password?.message}</p>
+      <Card.Body>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+          {errors.root && (
+            <div className={styles.globalError}>{errors.root.message}</div>
+          )}
 
-    <input type="password" {...register('confirmPassword')} placeholder="Confirmar Contraseña" />
-    <p className={styles.errorText}>{errors.confirmPassword?.message}</p>
+          <Input
+            label="Nombre Completo"
+            error={errors.fullName?.message}
+            disabled={isLoading}
+            {...register("fullName")}
+          />
+          <Input
+            label="Correo Electrónico"
+            error={errors.email?.message}
+            disabled={isLoading}
+            {...register("email")}
+          />
+          <Input
+            label="Contraseña"
+            type="password"
+            error={errors.password?.message}
+            disabled={isLoading}
+            {...register("password")}
+          />
+          <Input
+            label="Confirmar Contraseña"
+            type="password"
+            error={errors.confirmPassword?.message}
+            disabled={isLoading}
+            {...register("confirmPassword")}
+          />
 
-    <button type="submit">Registrar</button>
-   </form>
-  </div>
- );
+          <Button type="submit" variant="primary" disabled={isLoading}>
+            {isLoading ? "Registrando..." : "Crear Cuenta"}
+          </Button>
+        </form>
+      </Card.Body>
+
+      <Card.Footer>
+        <div className={styles.footerLinks}>
+          <span>¿Ya tiene una cuenta?</span>
+          <a href="/auth/login">Inicie sesión aquí</a>
+        </div>
+      </Card.Footer>
+    </Card>
+  );
 };
 
 export default Register;
