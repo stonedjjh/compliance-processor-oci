@@ -20,6 +20,10 @@ const Home: React.FC = () => {
       {/* === SECCIÓN HERO === */}
       <section className={styles.heroSection}>
         <div className={styles.heroLayout}>
+          <div className={styles.heroVisual}>
+            <img src={heroImage} alt="Flujo de cumplimiento tecnológico" />
+          </div>
+
           <div className={styles.heroContent}>
             <h1>Gestión Inteligente de Cumplimiento</h1>
             <p>
@@ -53,10 +57,6 @@ const Home: React.FC = () => {
                 </>
               )}
             </div>
-          </div>
-
-          <div className={styles.heroVisual}>
-            <img src={heroImage} alt="Flujo de cumplimiento tecnológico" />
           </div>
         </div>
       </section>
