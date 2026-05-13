@@ -1,10 +1,10 @@
 .card {
-  background: #ffffff;
+  background: var(--color-bg-main);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   padding: 1.5rem;
   margin-top: 2rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
 }
 
 .table_header {
@@ -13,7 +13,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 1.5rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .count {
@@ -35,7 +35,7 @@
   max-height: 550px; /* Evita que crezca infinitamente */
   overflow-y: auto;  /* Scroll si hay más contenido del que cabe */
   position: relative;
-  background-color: #fff;
+  background-color: var(--color-bg-main);
 }
 
 /* Para que la tabla ocupe todo el ancho pero respete el scroll */
@@ -83,7 +83,7 @@
 
 .modern_table th {
   text-align: left;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-weight: 600;
   padding: 12px;
   text-transform: uppercase;
@@ -98,7 +98,7 @@
 
 .uuid {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-family: monospace;
 }
 
@@ -117,7 +117,7 @@
 .empty_state {
   text-align: center;
   padding: 3rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -140,12 +140,12 @@
   cursor: pointer;
   padding: 8px 12px;
   border-radius: 4px;
-  border: 1px solid #ddd;
-  color: #333;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
 }
 
 .page_item:hover {
-  background-color: #f0f0f0;
+  background-color: var(--color-bg-alt);
 }
 
 .active {
@@ -171,15 +171,15 @@
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .page_selector select {
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background-color: #ffffff;
-  color: #333333; /* Forzamos color oscuro para que sea legible */
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
   font-weight: 600;
   cursor: pointer;
   outline: none;
@@ -204,14 +204,14 @@
 
 .page_item {
   padding: 6px 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .page_item:hover {
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-alt);
 }
 
 .active {

@@ -1,9 +1,8 @@
-
 import RegisterView from "../../view/RegisterView";
-import Layout from "../../view/Layout";
+import Layout from "../../view/layouts/DashboardLayout";
 import ManagementDocument from "../../view/ManagementDocument";
 
-const routerDashboard = [  
+const routerDashboard = [
   {
     path: "/dashboard",
     element: <Layout />,
@@ -19,7 +18,5 @@ const routerDashboard = [
     ],
   },
 ];
-
-
 
 export default routerDashboard;

@@ -1,24 +1,45 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
+import PublicLayout from "../view/layouts/PublicLayout";
+import DashboardLayout from "../view/layouts/DashboardLayout";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+
+// Vistas
 import Home from "../view/Home";
 import Error404 from "../view/Error404";
-import ProtectedRoute from "../components/Auth/ProtectedRoute";
-import routerAuth from "./auth"; 
+import routerAuth from "./auth";
 import routerDashboard from "./dashboard";
 
 export const router = createBrowserRouter([
   {
+    /* SECCIÓN PÚBLICA */
     path: "/",
-    element: <Home />,
+    element: (
+      <PublicLayout>
+        <PublicLayout.Header />
+        <PublicLayout.Main />
+        <PublicLayout.Footer />
+      </PublicLayout>
+    ),
     errorElement: <Error404 />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: "auth", children: routerAuth },
+    ],
   },
   {
-    path: "/auth",
-    children: routerAuth, // Ahora vienen de su propio archivo
-  },
-  {
-    /* Las rutas del dashboard ahora son "hijas" del protector */
-    element: <ProtectedRoute />, 
-    children: routerDashboard, // Eliminamos el spread (...) para pasarlas como grupo
+    /* SECCIÓN PRIVADA */
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: (
+          <DashboardLayout>
+            <DashboardLayout.Sidebar />
+            <DashboardLayout.Main />
+          </DashboardLayout>
+        ),
+        children: routerDashboard,
+      },
+    ],
   },
 ]);
 
