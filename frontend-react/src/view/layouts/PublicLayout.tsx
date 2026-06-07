@@ -21,7 +21,7 @@ const PublicMain: React.FC<LayoutProps> = ({ children }) => (
 
 const PublicFooter: React.FC = () => (
   <footer className={styles.footer}>
-    <p>© 2026 Compliance App - Arquitectura de Alto Rendimiento</p>
+    <p>© 2026 Compliance App - Arquitectura de Alto Rendimiento Distribuida</p>
   </footer>
 );
 
