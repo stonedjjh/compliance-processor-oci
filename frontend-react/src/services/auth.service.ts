@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-// La URL apunta a tu BFF (Node.js)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1/auth';
+import api from "../api/axios.config";
 
 export const authService = {
   /**
@@ -9,17 +6,18 @@ export const authService = {
    */
   login: async (email: string, password: any) => {
     try {
-      const response = await axios.post(`${API_URL}/api/v1/auth/login`, { email, password });
-      
-      if (response.data.access_token) {
-        // Guardamos el token y los datos básicos del usuario
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('token', response.data.access_token);
+      const response = await api.post(`/auth/login`, { email, password });
+
+      if (response.data.user) {
+        // Solo guardamos los metadatos visuales del usuario, el token ya está seguro en la Cookie
+        localStorage.setItem("user", JSON.stringify(response.data.user));
       }
-      
+
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.details || 'Error al iniciar sesión');
+      throw new Error(
+        error.response?.data?.details || "Error al iniciar sesión",
+      );
     }
   },
 
@@ -28,25 +26,23 @@ export const authService = {
    */
   register: async (userData: any) => {
     try {
-      const response = await axios.post(`${API_URL}/api/v1/auth/register`, userData);
+      const response = await api.post(`/auth/register`, userData);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.details || 'Error en el registro');
+      throw new Error(error.response?.data?.details || "Error en el registro");
     }
   },
 
   /**
    * Limpia la sesión local
    */
-  logout: () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+  logout: async () => {
+    try {
+      // Llamamos al BFF para que destruya la cookie HttpOnly
+      await api.post(`/auth/logout`);
+    } catch (error) {
+      console.error("Error al cerrar sesión en el servidor", error);
+    }
+    localStorage.removeItem("user");
   },
-
-  /**
-   * Obtiene el token actual para las cabeceras de otras peticiones
-   */
-  getCurrentToken: () => {
-    return localStorage.getItem('token');
-  }
 };

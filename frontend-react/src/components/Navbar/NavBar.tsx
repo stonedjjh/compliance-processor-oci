@@ -1,14 +1,14 @@
 import { Link, useNavigate, useLocation } from "react-router";
 import styles from "./Navbar.module.css";
+import { authService } from "../../services/auth.service";
 
 export const NavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isAuthenticated = !!localStorage.getItem("token");
+  const isAuthenticated = !!localStorage.getItem("user");
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await authService.logout();
     navigate("/", { replace: true });
   };
 

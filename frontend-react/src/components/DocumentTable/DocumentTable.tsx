@@ -5,6 +5,7 @@ import type { Document } from "../../types/document";
 import styles from "./DocumentTable.module.css";
 import ReactPaginateModule from "react-paginate";
 import Card from "../ui/Card/Card";
+import Toast from "../ui/Toast/Toast";
 
 export const DocumentTable = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -15,6 +16,12 @@ export const DocumentTable = () => {
   // PAGINACIÓN: Estados necesarios
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10); // Selector: 5, 10, 20
+
+  // ESTADOS PARA EL COMPONENTE TOAST
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error" | "info">(
+    "info",
+  );
 
   const ReactPaginate =
     (ReactPaginateModule as any).default || ReactPaginateModule;
@@ -60,8 +67,20 @@ export const DocumentTable = () => {
       loadData();
       // No hace falta actualizar el estado local aquí,
       // el socket 'document_processed' se encargará de cambiar el color a verde.
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error al disparar el proceso", err);
+
+      // Capturamos el error HTTP 403 / 401 delegado por el backend
+      if (err.response?.status === 403 || err.response?.status === 401) {
+        setToastMessage(
+          "Cuenta inactiva o sin permisos. Contacte al administrador.",
+        );
+      } else {
+        setToastMessage(
+          "Ocurrió un error inesperado al intentar procesar el documento.",
+        );
+      }
+      setToastType("error");
     }
   };
 
@@ -208,26 +227,36 @@ export const DocumentTable = () => {
 
         <Card.Footer>
           <div className={styles.pagination_container}>
-            <ReactPaginate
-              breakLabel="..."
-              nextLabel="Siguiente >"
-              onPageChange={handlePageClick}
-              pageRangeDisplayed={3}
-              marginPagesDisplayed={2}
-              pageCount={pageCount}
-              previousLabel="< Anterior"
-              containerClassName={styles.pagination}
-              activeClassName={styles.active}
-              pageClassName={styles.page_item}
-              previousClassName={styles.page_item}
-              nextClassName={styles.page_item}
-              breakClassName={styles.page_item}
-              disabledClassName={styles.disabled}
-              forcePage={currentPage} // Importante para mantener sincronía
-            />
+            {pageCount > 0 && (
+              <ReactPaginate
+                breakLabel="..."
+                nextLabel="Siguiente >"
+                onPageChange={handlePageClick}
+                pageRangeDisplayed={3}
+                marginPagesDisplayed={2}
+                pageCount={pageCount}
+                previousLabel="< Anterior"
+                containerClassName={styles.pagination}
+                activeClassName={styles.active}
+                pageClassName={styles.page_item}
+                previousClassName={styles.page_item}
+                nextClassName={styles.page_item}
+                breakClassName={styles.page_item}
+                disabledClassName={styles.disabled}
+                forcePage={currentPage} // Importante para mantener sincronía
+              />
+            )}
           </div>
         </Card.Footer>
       </Card>
+
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setToastMessage("")}
+        />
+      )}
     </div>
   );
 };

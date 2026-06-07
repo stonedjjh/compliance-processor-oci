@@ -1,14 +1,14 @@
 import { Navigate, Outlet } from "react-router";
 
 const ProtectedRoute = () => {
-  const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
 
-  if (!token) {
-    // Si no hay token, lo mandamos al login
+  if (!user) {
+    // Si no hay información de usuario, lo mandamos al login
     return <Navigate to="/auth/login" replace />;
   }
 
-  // Si hay token, permitimos que vea la ruta (el contenido de la ruta hija)
+  // Si hay usuario (y la cookie segura se maneja sola), permitimos que vea la ruta
   return <Outlet />;
 };
 
