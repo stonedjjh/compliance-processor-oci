@@ -1,7 +1,7 @@
-import { Navigate, Outlet } from 'react-router';
+import { Navigate, Outlet } from "react-router";
 
 const ProtectedRoute = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
 
   if (!token) {
     // Si no hay token, lo mandamos al login
