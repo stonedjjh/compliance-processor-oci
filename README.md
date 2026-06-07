@@ -16,6 +16,29 @@ El sistema se compone de varios servicios independientes. Actualmente, el desarr
 
 - **Orquestación Basada en Salud (Self-Healing Design):** El arranque de la aplicación FastAPI (doc_processor_app) está orquestado mediante Healthchecks avanzados. Utiliza su propio endpoint /api/v1/health para validar la conectividad real con PostgreSQL y MongoDB antes de considerarse "sana", garantizando que los servicios dependientes nunca intenten conectar a una infraestructura no operativa.
 
+### Diagrama de Flujo de Microservicios
+
+```mermaid
+graph TD
+    subgraph Frontend Network [DMZ - Red Pública]
+        Client[Cliente SPA - React]
+        BFF[BFF - Node.js Express]
+    end
+
+    subgraph Backend Network [Red Privada - Backend]
+        Core[Core Service - FastAPI]
+        PG[(PostgreSQL)]
+        Mongo[(MongoDB)]
+        S3[(MinIO Storage)]
+    end
+
+    Client -- "HTTP / WSS\n(Cookies HttpOnly)" --> BFF
+    BFF -- "HTTP REST\n(X-API-KEY, X-User-Id)" --> Core
+    Core -- "Transacciones (ACID)" --> PG
+    Core -- "Logs Inmutables" --> Mongo
+    Core -- "Almacenamiento de Archivos" --> S3
+```
+
 ## Service Document Processor (Python)
 
 Este servicio es el punto de entrada para la gestión de archivos. Utiliza FastAPI para garantizar un alto rendimiento y tipado de datos estricto.
@@ -26,7 +49,7 @@ Este servicio es el punto de entrada para la gestión de archivos. Utiliza FastA
 
 - **Seguridad de Infraestructura:** Aunque no formaba parte de los requerimientos iniciales, se implementó una restricción de **tamaño máximo de 10MB** por archivo para prevenir ataques de denegación de servicio (DoS) y optimizar el almacenamiento.
 
-- **Observabilidad (Health Checks):** Endpoint dinámico /api/v1/health que monitorea en tiempo real monitorea en tiempo real el 'Triángulo de Persistencia' (PostgreSQL, MongoDB y MinIO),  devolviendo estados 503 ante fallos de infraestructura.
+- **Observabilidad (Health Checks):** Endpoint dinámico /api/v1/health que monitorea en tiempo real monitorea en tiempo real el 'Triángulo de Persistencia' (PostgreSQL, MongoDB y MinIO), devolviendo estados 503 ante fallos de infraestructura.
 
 - **Control de Extensiones:** Sistema flexible basado en listas blancas que permite restringir tipos de archivos (configurado actualmente para permitir todos mediante `*`).
 
@@ -34,8 +57,6 @@ Este servicio es el punto de entrada para la gestión de archivos. Utiliza FastA
 
 > [!IMPORTANT]
 > Observación de Integridad: Se identificó la necesidad de un sistema de detección de duplicados de documentos (vía hash SHA-256) para optimizar el almacenamiento. Se ha priorizado la arquitectura de servicios core, dejando esta funcionalidad como una mejora incremental planificada.
-
-
 
 ### Documentación del API Core
 
@@ -45,18 +66,17 @@ El microservicio está documentado siguiendo el estándar OpenAPI 3.0. FastAPI g
 <img src="./image/Document_Processing_Service_Docs.png" width="800" alt="Swagger UI Core Service">
 </p>
 
-
 ### Gestión de Errores y Estados
 
 El servicio utiliza códigos de estado HTTP estandarizados para una integración consistente:
 
-|Código|Razón|Acción de Auditoría|
-|:---|:---|:---|
-|201| Created|Carga exitosa|DOCUMENT_UPLOADED|
-|200| OK|Procesamiento exitoso|DOCUMENT_PROCESSED|
-|409| Conflict|Documento duplicado|DUPLICATE_UPLOAD_ATTEMPT|
-|413| Entity Too Large|Excede los 10MB|Log de seguridad interno|
-|503| Service Unavailable|Base de datos caída|Reportado por Health Check|
+| Código | Razón               | Acción de Auditoría   |
+| :----- | :------------------ | :-------------------- | -------------------------- |
+| 201    | Created             | Carga exitosa         | DOCUMENT_UPLOADED          |
+| 200    | OK                  | Procesamiento exitoso | DOCUMENT_PROCESSED         |
+| 409    | Conflict            | Documento duplicado   | DUPLICATE_UPLOAD_ATTEMPT   |
+| 413    | Entity Too Large    | Excede los 10MB       | Log de seguridad interno   |
+| 503    | Service Unavailable | Base de datos caída   | Reportado por Health Check |
 
 ### Ejecución de Pruebas
 
@@ -80,7 +100,6 @@ El sistema cuenta con una suite de pruebas automatizadas con Pytest que validan 
 
 - **Organización DDD**: Se ha considerado una estructura basada en DDD (Domain-Driven Design), pero dado el tamaño y alcance actual de este servicio único, se ha optado por una estructura modular más ligera para evitar sobreingeniería, priorizando la claridad y la rapidez de desarrollo.
 
-
 ### Demostración de Trazabilidad End-to-End
 
 Para garantizar la integridad de los datos, el sistema sincroniza cada carga en tres capas distintas utilizando un identificador único (UUID).
@@ -93,7 +112,6 @@ El endpoint /upload procesa el archivo, lo sube a la infraestructura de almacena
   <img src="./image/upload_file.png" width="800" alt="swagger interface">
 </p>
 
-
 2. Persistencia Relacional (PostgreSQL)
 
 Se registra la metadata principal y la ruta lógica del archivo para consultas rápidas y gestión de estados.
@@ -103,14 +121,14 @@ Se registra la metadata principal y la ruta lógica del archivo para consultas r
 </p>
 
 3. Auditoría Documental (MongoDB)
-Cada evento se registra de forma inmutable para fines de cumplimiento y auditoría, almacenando el contexto del evento.
+   Cada evento se registra de forma inmutable para fines de cumplimiento y auditoría, almacenando el contexto del evento.
 
 <p align="center">
   <img src="./image/mongodb-proof.png" width="800" alt="mongodb terminal">
 </p>
 
 4. Almacenamiento de Objetos (MinIO)
-El archivo físico se almacena de forma segura conservando la estructura de carpetas definida por el storage_path.
+   El archivo físico se almacena de forma segura conservando la estructura de carpetas definida por el storage_path.
 
 <p align="center">
   <img src="./image/minio-proof.png" width="800" alt="minio interface">
@@ -182,6 +200,8 @@ El proyecto sigue los principios de Twelve-Factor App, específicamente en la ge
 
 - **Seguridad S2S (Service-to-Service):** Se implementó un "Handshake" de seguridad entre el BFF y el Core. Todas las peticiones internas requieren el header `X-API-KEY`. Esto asegura que el procesador de documentos solo acepte peticiones legítimas del BFF.
 
+- **Protección contra XSS (Cross-Site Scripting):** La autenticación de usuarios se maneja emitiendo un JSON Web Token (JWT) almacenado exclusivamente en una cookie `HttpOnly` con política `SameSite=Lax`. Esto garantiza que la sesión del usuario viaje de forma segura y sea inaccesible para scripts maliciosos en el navegador.
+
 ### Flujo de Notificaciones en Tiempo Real
 
 Para ofrecer una experiencia de usuario fluida, el sistema utiliza un modelo de comunicación reactivo:
@@ -233,7 +253,6 @@ Cada vez que se realiza un `push` o un `Pull Request` hacia la rama principal, e
 - **Validación de Salud (Health Checks):** El pipeline espera activamente a que todos los servicios internos reporten un estado `healthy` antes de proceder, asegurando que no haya errores de conectividad.
 
 - **Suite de Pruebas de Integración:** Ejecución de pytest directamente dentro del contenedor del microservicio para validar:
-
   - Autenticación S2S (X-API-KEY).
 
   - Persistencia real en las tres capas (SQL, NoSQL, S3).
@@ -282,7 +301,6 @@ La interfaz de usuario ha sido diseñada como un Single Page Application (SPA) r
 - **Gestión de Estados Reactiva:** La tabla de documentos no requiere recarga manual. Al recibir un evento document_processed vía Socket, el estado local se actualiza mediante un mapeo inmutable, transformando visualmente la fila de "Recibido" (Azul) a "Procesado" (Verde) al instante.
 
 - **Feedback de Usuario (UX):** - Limpieza automática de formularios mediante useRef tras cargas exitosas.
-
   - Sistema de notificaciones temporales (`setTimeout`) para confirmaciones de carga y errores de validación.
 
   - Botones de acción contextuales que cambian según el estado del documento (Procesar vs. Ver Detalles).
@@ -310,7 +328,7 @@ npm run dev
 npm run build
 ```
 
-##  Guía de Inicio Rápido (Local)
+## Guía de Inicio Rápido (Local)
 
 Siga estos pasos para levantar el ecosistema completo en su máquina local utilizando Docker. El sistema configurará automáticamente las redes internas y volúmenes de persistencia.
 
@@ -331,7 +349,7 @@ El proyecto utiliza una arquitectura de 12-factor app. Debe configurar los archi
 
 3. **Frontend (/frontend-react):** Configure el .env con la URL del BFF (VITE_API_URL).
 
-```bash 
+```bash
 # Ejemplo rápido para copiar los archivos de ejemplo (en sistemas Unix/WSL)
 cp .env.example .env
 cp bff-node/.env.example bff-node/.env
@@ -345,7 +363,7 @@ cp frontend-react/.env.example frontend-react/.env
 
 Desde la raíz del proyecto, ejecute el siguiente comando. Docker construirá las imágenes del frontend (Multi-stage con Nginx), el BFF (Node.js) y el Core (FastAPI).
 
-```bash 
+```bash
 docker-compose up --build
 ```
 
@@ -357,6 +375,7 @@ Para alinearse con las mejores prácticas de **Cloud Security**, los puertos de 
 - **Swagger UI (Documentación Core)**: Facilita la prueba manual de los endpoints del microservicio de Python. Para acceder, descomente el puerto `8000:8000` en el servicio `core-proc`.
 
 Una vez habilitados, podrá acceder en:
+
 - **MinIO**: `http://localhost:9001`
 - **Swagger**: `http://localhost:8000/docs`
 
@@ -405,11 +424,11 @@ compliance-processor-oci/
 ├── service-doc-proc/
 │   ├── app/
 │   │   ├── api/
-│   │   │   └── v1/ 
-│   │   │   |   └── controllers/ 
-│   │   │   |   └── routers/ 
+│   │   │   └── v1/
+│   │   │   |   └── controllers/
+│   │   │   |   └── routers/
 │   │   ├── internal/
-│   │   │   └── config.py     # Gestión de variables de entorno y configuración centralizada 
+│   │   │   └── config.py     # Gestión de variables de entorno y configuración centralizada
 │   │   │   └── database.py   # SQLAlchemy, Sesiones y Health Check SQL
 │   │   │   └── models.py     # Modelos relacionales (PostgreSQL)
 │   │   │   └── mongodb.py    # Cliente NoSQL asíncrono (Motor) y auditoría
@@ -423,14 +442,14 @@ compliance-processor-oci/
 │   │   ├── conftest.py        # Fixtures y mocks de entorno
 │   │   └── test_main.py       # Pruebas unitarias e integración
 │   └── .dockerignore          # Exclusión de archivos para construcción de la imagen de Python
-│   └── Dockerfile             # Definición de la imagen base y pasos de despliegue 
+│   └── Dockerfile             # Definición de la imagen base y pasos de despliegue
 │   └── requirements.txt       # Lista de dependencias del proyecto Python
 ├── bff-node/
 │   ├── src/
 │   │   ├── adapters/
 │   │   │   └── document.adapter.ts      # Cliente Axios para comunicación con el Core Service
 │   │   │── controller/
-│   │   │   └── document.controllers.ts  # Orquestación de peticiones y manejo de respuestas 
+│   │   │   └── document.controllers.ts  # Orquestación de peticiones y manejo de respuestas
 │   │   ├── middlewares/
 │   │   │── routes/
 │   │   │   └── document.routes.ts # Definición de rutas y vinculación con controladores
@@ -443,10 +462,10 @@ compliance-processor-oci/
 │   ├── tsconfig.json # Reglas de compilación y configuración de tipos de TypeScript
 ├── frontend-react/
 │   ├── public/       # Activos estáticos accesibles directamente por el navegador
-│   ├── src/ 
+│   ├── src/
 │   │   ├── api/
 │   │   │   └── axios.config.ts  # Configuración base de Axios e interceptores de peticiones
-│   │   │   └── documentApi.ts   # Definición de servicios para interactuar con los endpoints 
+│   │   │   └── documentApi.ts   # Definición de servicios para interactuar con los endpoints
 │   │   ├── assets/              # Recursos multimedia (imágenes, iconos, fuentes)
 │   │   ├── components/
 │   │   │   ├──DocumentTable      # Tabla reactiva con actualización de estados vía Sockets
@@ -459,7 +478,7 @@ compliance-processor-oci/
 │   │   │   ├  └── UploadBox.module.css
 │   │   │   ├  └── UploadBox.tsx
 │   │   ├── context/
-│   │   │   └── SocketContext.tsx # Proveedor global para la instancia de Socket.io 
+│   │   │   └── SocketContext.tsx # Proveedor global para la instancia de Socket.io
 │   │   ├── hook/
 │   │   │   └── useSocket.tsx # Hook personalizado para suscripción a eventos en tiempo real
 │   │   ├── type/
@@ -473,13 +492,11 @@ compliance-processor-oci/
 ├── .env              # Variables de entorno globales para la orquestación del proyecto
 ├── .gitignore        # Exclusión de archivos para el control de versiones de Git
 ├── docker-compose.yml  # Orquestación de contenedores (BFF, Core, DBs y Storage)
-```    
+```
 
 ## Próximos Pasos (Planificación Incremental)
 
-- **Seguridad End-to-End:** Implementar autenticación JWT para proteger las rutas del BFF y persistir la sesión en el Frontend.
-
-- **Gestión de Usuarios:** Creación de pantalla de registro e inicio de sesión utilizando `react-hook-form`y validaciones de esquema con `Zod`.
+- **Gestión de Usuarios y Trazabilidad:** Refactorización de la pantalla de registro para nuevos analistas e implementación del diseño visual de la Línea de Tiempo (Timeline) para auditar el ciclo de vida del documento y las acciones de los usuarios.
 
 - **Paginación Real (Full-Stack):** Aunque el API Core ya soporta los parámetros `skip` y `limit`, falta implementar los controles de navegación (Siguiente/Anterior) en la UI para optimizar la carga de grandes volúmenes de datos.
 
@@ -490,11 +507,9 @@ compliance-processor-oci/
 - **Interoperabilidad Legacy:** Integración de servicios externos mediante **Flask** y **SOAP** para validaciones de cumplimiento de terceros.
 
 - **Calidad de Código y Documentación:** - Cobertura de pruebas unitarias para la integración entre el BFF y React.
-
   - Inclusión de `docstrings` bajo el estándar Google/Numpy en todos los módulos de Python y Node.js para facilitar el mantenimiento.
 
 - **Integridad de Datos:** Implementación de hashing SHA-256 para la detección de documentos duplicados antes del almacenamiento en MinIO.
-
 
 ## Actualización al 05/05/2026
 
@@ -503,7 +518,6 @@ compliance-processor-oci/
 El sistema trasciende la programación simple para convertirse en una solución de infraestructura como código. La transición de local a la nube fue posible gracias a:
 
 - **Desacoplamiento Estructural:** La independencia entre el Frontend, BFF y Core Service permitió integrar herramientas de automatización sin reescribir la lógica de negocio.
-
 
 ### Registro de Decisiones Arquitectónicas (ADR)
 
