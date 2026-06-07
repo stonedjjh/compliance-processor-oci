@@ -1,4 +1,4 @@
-from sqlalchemy import String, DateTime
+from sqlalchemy import String, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from app.internal.database import Base
 from sqlalchemy.dialects.postgresql import UUID
@@ -16,6 +16,9 @@ class Document(Base):
     content_type: Mapped[str] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, default="Recibido")
     storage_path: Mapped[str] = mapped_column(String, nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

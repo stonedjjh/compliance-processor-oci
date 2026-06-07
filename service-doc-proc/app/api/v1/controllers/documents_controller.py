@@ -15,11 +15,31 @@ from app.utils.validators import validate_file_upload
 from app.utils.notifier import DocumentLog, notify_document_processed
 
 
-async def handle_upload(file: UploadFile, db: Session):
+async def handle_upload(file: UploadFile, user_id: uuid.UUID, db: Session):
     """Maneja la lógica de subida de archivos, validación, almacenamiento y registro en DB.
     También se encarga de la auditoría de eventos relacionados con la subida.
-    (file: UploadFile, db: Session) -> dict
+    (file: UploadFile, user_id: uuid.UUID, db: Session) -> dict
     """
+    # =========================================================================
+    # VALIDACIÓN DE AUTORIZACIÓN (Usuario Activo)
+    # =========================================================================
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if not user.is_active:
+        await mongodb_add_register(
+            {
+                "event_type": "UNAUTHORIZED_UPLOAD_ATTEMPT",
+                "user_id": str(user_id),
+                "details": {"filename": file.filename, "reason": "Inactive account"},
+            }
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="La cuenta se encuentra inactiva. No tiene permisos para subir archivos.",
+        )
+
     filename = file.filename
     if not filename:
         raise HTTPException(status_code=400, detail="Nombre de archivo no válido")
@@ -54,12 +74,14 @@ async def handle_upload(file: UploadFile, db: Session):
             content_type=file.content_type,
             status="Recibido",
             storage_path=storage_path,
+            user_id=user_id,
         )
 
         db_create_document(db, new_doc)
         log_record = {
             "event_type": "DOCUMENT_UPLOADED",
             "document_id": file_id,
+            "user_id": str(user_id),
             "details": {"filename": original_filename, "status": "SUCCESS"},
         }
 
@@ -82,6 +104,7 @@ async def handle_upload(file: UploadFile, db: Session):
         await mongodb_add_register(
             {
                 "event_type": "DOCUMENT_UPLOAD_FAILED",
+                "user_id": str(user_id),
                 "document_id": file_id,
                 "details": {"error": str(e), "filename": filename},
             }
@@ -117,7 +140,26 @@ async def get_by_id(id: uuid.UUID, db: Session):
         raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
-async def process_document(id: uuid.UUID, db: Session):
+async def process_document(id: uuid.UUID, user_id: uuid.UUID, db: Session):
+    # 1. Validación de autorización de usuario
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if not user.is_active:
+        await mongodb_add_register(
+            {
+                "event_type": "UNAUTHORIZED_PROCESS_ATTEMPT",
+                "user_id": str(user_id),
+                "document_id": str(id),
+                "details": {"reason": "Inactive account"},
+            }
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="La cuenta se encuentra inactiva. No puede procesar documentos.",
+        )
+
     # db_document = db.query(models.Document).filter(models.Document.id == id).first()
     db_document = await get_by_id(id, db)
 
@@ -138,6 +180,7 @@ async def process_document(id: uuid.UUID, db: Session):
         await mongodb_add_register(
             {
                 "event_type": "DOCUMENT_PROCESSED",
+                "user_id": str(user_id),
                 "document_id": str(id),
                 "details": {"status": "PROCESSED", "executor": "system_v1"},
             }
@@ -161,6 +204,7 @@ async def process_document(id: uuid.UUID, db: Session):
         await mongodb_add_register(
             {
                 "event_type": "PROCESS_FAILED",
+                "user_id": str(user_id),
                 "document_id": str(id),
                 "details": {"error": str(e), "current_status": db_document.status},
             }

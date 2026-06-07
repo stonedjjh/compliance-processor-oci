@@ -3,7 +3,16 @@ Document API Router
 """
 
 import uuid
-from fastapi import APIRouter, File, UploadFile, Depends, Security, status, Response
+from fastapi import (
+    APIRouter,
+    File,
+    UploadFile,
+    Depends,
+    Security,
+    status,
+    Response,
+    Header,
+)
 from sqlalchemy.orm import Session
 from app.api.v1.controllers import documents_controller
 from app.internal.database import get_db
@@ -16,8 +25,14 @@ router = APIRouter(prefix="/documents", tags=["documents"], redirect_slashes=Fal
 
 
 @router.post("/upload", status_code=201, dependencies=[Security(get_api_key)])
-async def upload(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    return await documents_controller.handle_upload(file, db)
+async def upload(
+    file: UploadFile = File(...),
+    x_user_id: uuid.UUID = Header(
+        ..., description="ID del usuario autenticado proveniente del BFF"
+    ),
+    db: Session = Depends(get_db),
+):
+    return await documents_controller.handle_upload(file, x_user_id, db)
 
 
 @router.get(
@@ -41,9 +56,14 @@ async def list_docs(
     dependencies=[Security(get_api_key)],
 )
 async def process_document(
-    id: uuid.UUID, response: Response, db: Session = Depends(database.get_db)
+    id: uuid.UUID,
+    response: Response,
+    x_user_id: uuid.UUID = Header(
+        ..., description="ID del usuario autenticado proveniente del BFF"
+    ),
+    db: Session = Depends(database.get_db),
 ):
-    return await documents_controller.process_document(id, db)
+    return await documents_controller.process_document(id, x_user_id, db)
 
 
 @router.get(

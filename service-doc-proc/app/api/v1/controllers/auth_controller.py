@@ -82,16 +82,46 @@ async def validate_user_credentials(credentials: schemas.UserLogin, db: Session)
             db.query(models.User).filter(models.User.email == credentials.email).first()
         )
 
-        if not user or not auth_utils.verify_password(
-            credentials.password, user.hashed_password
-        ):
-            # Auditoría de intento fallido
+        if not user:
+            # Auditoría de intento fallido por usuario no encontrado
             await mongodb_add_register(
                 {
                     "event_type": "LOGIN_ATTEMPT_FAILED",
                     "details": {
                         "email": credentials.email,
                         "reason": "Invalid credentials",
+                    },
+                }
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Credenciales incorrectas",
+            )
+
+        if not user.is_active:
+            # Auditoría de intento fallido por cuenta inactiva
+            await mongodb_add_register(
+                {
+                    "event_type": "LOGIN_ATTEMPT_FAILED",
+                    "details": {
+                        "email": credentials.email,
+                        "reason": "Inactive account",
+                    },
+                }
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="La cuenta se encuentra inactiva. Contacte al administrador.",
+            )
+
+        if not auth_utils.verify_password(credentials.password, user.hashed_password):
+            # Auditoría de intento fallido por contraseña incorrecta
+            await mongodb_add_register(
+                {
+                    "event_type": "LOGIN_ATTEMPT_FAILED",
+                    "details": {
+                        "email": credentials.email,
+                        "reason": "Invalid password",
                     },
                 }
             )

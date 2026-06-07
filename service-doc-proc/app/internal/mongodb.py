@@ -11,10 +11,14 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client[MONGO_DB_NAME]
 
 
-class AuditEvent(TypedDict):
+class _AuditEventBase(TypedDict):
     event_type: str
     document_id: str
     details: dict[str, Any]
+
+
+class AuditEvent(_AuditEventBase, total=False):
+    user_id: str
 
 
 async def add_register(event: AuditEvent):
