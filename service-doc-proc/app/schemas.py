@@ -17,6 +17,7 @@ class DocumentOut(BaseModel):
     storage_path: str | None = None
     content_type: str | None = None
     created_at: datetime
+    user_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -59,5 +60,4 @@ class UserResponse(UserBase):
     must_change_password: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
