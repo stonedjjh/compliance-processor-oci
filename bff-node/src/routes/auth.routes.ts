@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { login, register } from "../controllers/auth.controller";
+import { login, register, logout } from "../controllers/auth.controller";
 
 const router = Router();
 
 /**
  * @route POST /api/auth/register
+ * 
  * @desc  Registra un nuevo analista en el sistema
  */
 router.post("/register", register);
@@ -14,5 +15,7 @@ router.post("/register", register);
  * @desc  Autentica al usuario y retorna el JWT
  */
 router.post("/login", login);
+
+router.post("/logout", logout);
 
 export default router;

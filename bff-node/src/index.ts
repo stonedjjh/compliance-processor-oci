@@ -9,6 +9,8 @@ import multer from "multer";
 import { DocumentAdapter } from "./adapters/document.adapter";
 import documentRoutes from "./routes/document.routes";
 import authRoutes from "./routes/auth.routes";
+import cookieParser from "cookie-parser";
+import { requireAuth } from "./middlewares/auth.middleware";
 
 dotenv.config();
 
@@ -25,6 +27,7 @@ const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins, // Ajustar luego según el puerto de tu React
     methods: ["GET", "POST"],
+    credentials: true, // CLAVE: Permitir cookies en la conexión de WebSockets
   },
 });
 
@@ -42,12 +45,12 @@ app.use(
 app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use("/api/v1/documents", documentRoutes);
+app.use(cookieParser());
+app.use("/api/v1/documents", requireAuth, documentRoutes);
 app.use("/api/v1/auth", authRoutes);
 
 const notificationNamespace = io.of("/notifications");
-notificationNamespace.on("connection", (socket) => {  
-});
+notificationNamespace.on("connection", (socket) => {});
 
 app.use((req: any, res, next) => {
   req.io = notificationNamespace;
@@ -79,7 +82,7 @@ app.post(
       filename,
       timestamp: new Date(),
     });
-    
+
     res.status(200).json({ received: true });
   },
 );

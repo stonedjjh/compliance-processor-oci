@@ -10,10 +10,21 @@ export const uploadDocument = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "No se detectó ningún archivo" });
     }
 
+    // Extraemos el ID del usuario validado por el middleware de JWT
+    // Ajusta req.user.id según cómo tengas nombrado el payload en tu middleware
+    const userId = (req as any).user?.id || (req as any).userId;
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ error: "Usuario no autenticado en el BFF" });
+    }
+
     const result = await docAdapter.uploadDocument(
       req.file.buffer,
       req.file.originalname,
       req.file.mimetype,
+      userId,
     );
 
     if ((req as any).io) {
@@ -85,8 +96,17 @@ export const processDocument = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "ID requerido para procesar" });
     }
 
+    // Extraemos el ID del usuario desde el JWT validado
+    const userId = (req as any).user?.id || (req as any).userId;
+
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ error: "Usuario no autenticado en el BFF" });
+    }
+
     // 1. Llamamos al adaptador para procesar en el Core (Python)
-    const result = await docAdapter.processDocument(id);
+    const result = await docAdapter.processDocument(id, userId);
 
     // 2. Extraemos la data de la respuesta del adaptador
     // Nota: 'result' suele tener la estructura { id, status, filename... }
