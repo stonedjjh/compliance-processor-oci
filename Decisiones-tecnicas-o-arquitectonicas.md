@@ -203,3 +203,56 @@ Se adoptó una arquitectura de componentes basada en dos pilares:
 
 - Positivas: Máxima flexibilidad para modificar la estructura de las páginas sin duplicar lógica. El código es más legible y profesional. La estandarización de colores y componentes garantiza una experiencia de usuario (UX) coherente y facilita cambios globales de estilo (rebranding) en segundos.
 - Negativas: Incrementa la complejidad inicial del tipado en TypeScript para gestionar los componentes compuestos y requiere que el equipo siga el flujo de creación de componentes en lugar de usar etiquetas HTML directas.
+
+## 9. Estrategia de Migración de Datos para Cambios de Esquema Estrictos (Data Backfilling)
+
+### Fecha
+
+2026-05-08
+
+### Estatus
+
+Aceptado
+
+### Contexto
+
+A medida que el sistema evoluciona, surge la necesidad de agregar nuevas reglas de integridad referencial a tablas que ya contienen datos en producción (por ejemplo, agregar una columna obligatoria a documentos existentes). Las migraciones automáticas fallan porque los registros históricos no cumplen con la nueva restricción de "no nulo" (`nullable=False`).
+
+### Decisión
+
+Se establece como estándar prohibir la eliminación o truncado de datos (Data Loss) para resolver conflictos de esquema. En su lugar, toda migración que agregue campos obligatorios debe implementarse mediante un patrón de **Backfilling de 3 pasos** modificando el script de Alembic:
+
+1. **Relajación Temporal:** Se agrega la nueva columna temporalmente como opcional (`nullable=True`).
+2. **Relleno de Datos (Backfilling):** Se inyectan o asocian datos por defecto a los registros históricos (por ejemplo, asignándolos a un usuario de sistema/legacy).
+3. **Aplicación de Restricción:** Se altera la columna para imponer la regla estricta (`nullable=False`) de manera segura.
+
+### Consecuencias
+
+- Positivas: Garantiza la integridad y conservación de los datos históricos en producción, permitiendo un despliegue seguro.
+- Negativas: Los desarrolladores deben intervenir manualmente los scripts autogenerados por Alembic utilizando SQL crudo u operaciones de la API de Alembic.
+
+## 10. Migración de JWT a Cookies HttpOnly para Protección contra XSS
+
+### Fecha
+
+2026-05-09
+
+### Estatus
+
+Aceptado
+
+### Contexto
+
+Inicialmente, el JSON Web Token (JWT) devuelto por el BFF tras una autenticación exitosa se almacenaba en el `localStorage` del navegador. Este enfoque pragmático exponía la sesión a riesgos críticos de seguridad, específicamente ataques de Cross-Site Scripting (XSS), donde cualquier script de terceros comprometido podría leer el almacenamiento local, extraer el token y suplantar la identidad del analista.
+
+### Decisión
+
+Se decidió refactorizar el flujo de autenticación adoptando un enfoque "Security-First" para que el token JWT sea gestionado exclusivamente a través de cookies seguras:
+
+1. **BFF (Node.js)**: Configurado para inyectar el token en una cookie de respuesta con los atributos `HttpOnly=true` (bloquea acceso desde JS), `Secure=true` (solo viaja por HTTPS en producción) y `SameSite=strict` (mitigación de ataques CSRF).
+2. **Frontend (React)**: Se eliminó completamente la manipulación manual de tokens en `localStorage`. Se configuró la instancia global de Axios con la bandera `withCredentials: true` para delegar el transporte seguro del token directamente al navegador.
+
+### Consecuencias
+
+- Positivas: Reducción drástica de la superficie de ataque al hacer que el token sea completamente invisible e inaccesible para el entorno de ejecución JavaScript, garantizando inmunidad contra el robo de sesiones por XSS.
+- Negativas: Obliga a mantener una configuración estricta de CORS en el servidor para permitir el intercambio de credenciales e introduce la necesidad de crear endpoints de sesión explícitos (`/logout`) en el BFF para instruir al navegador a destruir la cookie.
