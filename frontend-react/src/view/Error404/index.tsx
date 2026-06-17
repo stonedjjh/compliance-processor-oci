@@ -13,13 +13,14 @@ const Error404: React.FC = () => {
 
   return (
     <div className={styles.divContainer}>
-    <h1 className={`${styles.redColor} ${styles.title}`}>404</h1>
-    <h2 className={styles.subtitle}>Página no encontrada</h2>
-    <p>La página que buscas no existe o ha sido movida.</p>
-    <Link className={styles.link} to="/">
-      Volver al inicio
-    </Link>
-  </div>
-);
+      <h1 className={`${styles.redColor} ${styles.title}`}>404</h1>
+      <h2 className={styles.subtitle}>Página no encontrada</h2>
+      <p>La página que buscas no existe o ha sido movida.</p>
+      <Link className={styles.link} to="/">
+        Volver al inicio
+      </Link>
+    </div>
+  );
+};
 
 export default Error404;
