@@ -2,11 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Button from "../../components/ui/Button/Button";
 import Card from "../../components/ui/Card/Card"; // <--- Importamos el nuevo Card
+import usePageMetadata from "../../hooks/usePageMetadata";
 import styles from "./Home.module.css";
 
 import heroImage from "../../assets/compliance-hero.png";
 
 const Home: React.FC = () => {
+  usePageMetadata({
+    title: "Compliance Processor | Inicio",
+    description:
+      "Plataforma para la gestión de cumplimiento y análisis documental con auditoría y trazabilidad seguras.",
+    keywords: "cumplimiento, documentos, auditoría, gestión documental, SaaS",
+  });
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const navigate = useNavigate();
 

@@ -2,9 +2,17 @@ import { useLogin } from "../../hooks/auth/useLogin";
 import Card from "../../components/ui/Card/Card";
 import Input from "../../components/ui/Input/Input";
 import Button from "../../components/ui/Button/Button";
+import usePageMetadata from "../../hooks/usePageMetadata";
 import styles from "./LoginView.module.css";
 
 const LoginView = () => {
+  usePageMetadata({
+    title: "Compliance Processor | Iniciar sesión",
+    description:
+      "Accede al sistema de cumplimiento para gestionar documentos y auditorías en la nube.",
+    keywords: "login, inicio de sesión, cumplimiento, seguridad",
+  });
+
   const { register, handleSubmit, onSubmit, errors } = useLogin();
 
   return (
